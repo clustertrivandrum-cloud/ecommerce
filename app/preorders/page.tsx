@@ -163,7 +163,7 @@ export default function PreordersPage() {
                   {preorder.orderId && (
                     <Link
                       href={`/orders?orderId=${preorder.orderId}&status=${preorder.orderFinancialStatus === 'paid' ? 'paid' : 'pending'}`}
-                      className="text-sm font-medium text-accent-gold hover:text-white transition-colors"
+                      className="text-sm font-medium text-accent-gold hover:text-text-primary transition-colors"
                     >
                       View Order
                     </Link>

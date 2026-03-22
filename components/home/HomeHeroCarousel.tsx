@@ -80,14 +80,16 @@ export function HomeHeroCarousel({ slides }: HomeHeroCarouselProps) {
             <button
               type="button"
               onClick={() => setActiveIndex((current) => (current - 1 + slides.length) % slides.length)}
-              className="rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur hover:bg-black/45"
+              className="hero-control hover:hero-control-hover rounded-full p-2 backdrop-blur"
+              aria-label="Previous slide"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               type="button"
               onClick={() => setActiveIndex((current) => (current + 1) % slides.length)}
-              className="rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur hover:bg-black/45"
+              className="hero-control hover:hero-control-hover rounded-full p-2 backdrop-blur"
+              aria-label="Next slide"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -98,7 +100,8 @@ export function HomeHeroCarousel({ slides }: HomeHeroCarouselProps) {
                 key={slide.id}
                 type="button"
                 onClick={() => setActiveIndex(index)}
-                className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-10 bg-accent-gold' : 'w-2.5 bg-white/55'}`}
+                aria-label={`Go to slide ${index + 1}`}
+                className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-10 bg-accent-gold' : 'hero-dot w-2.5'}`}
               />
             ))}
           </div>

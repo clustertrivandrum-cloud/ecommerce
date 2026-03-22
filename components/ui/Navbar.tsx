@@ -11,6 +11,7 @@ import { getCategories, type Category } from '@/lib/api/home';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -116,6 +117,8 @@ export function Navbar() {
             >
               <Search className="w-5 h-5" />
             </button>
+
+            <ThemeToggle compact />
             
             <Link href="/profile" className="hidden lg:block hover:text-accent-gold transition-colors">
               <User className="w-5 h-5" />
@@ -146,7 +149,8 @@ export function Navbar() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-[80] w-[88vw] max-w-sm border-r border-border bg-primary/95 px-5 pb-8 pt-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] transition-transform duration-300 lg:hidden',
+          'fixed inset-y-0 left-0 z-[80] w-[88vw] max-w-sm border-r border-border bg-primary/95 px-5 pb-8 pt-5 transition-transform duration-300 lg:hidden',
+          'panel-shadow',
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         aria-hidden={!mobileMenuOpen}
@@ -189,6 +193,16 @@ export function Navbar() {
               >
                 Wishlist
               </Link>
+            </div>
+          </section>
+
+          <section className="rounded-[1.5rem] border border-border bg-card/60 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-text-secondary">Appearance</p>
+                <p className="mt-2 text-sm text-text-primary">Switch between dark and logo-inspired light mode.</p>
+              </div>
+              <ThemeToggle />
             </div>
           </section>
 

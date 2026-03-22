@@ -786,7 +786,7 @@ export default function CheckoutPage() {
             {!appliedDiscount && (
               <button 
                 onClick={() => setCouponModalOpen(true)}
-                className="flex items-center gap-2 text-accent-gold hover:text-white transition-colors mt-4"
+                className="mt-4 flex items-center gap-2 text-accent-gold transition-colors hover:text-text-primary"
               >
                 <Tag className="w-4 h-4" /> Apply Coupon
               </button>

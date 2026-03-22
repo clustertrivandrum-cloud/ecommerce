@@ -13,7 +13,7 @@ export function AnnouncementBar({ text, linkLabel, linkHref, background, textCol
 
   return (
     <div
-      className="border-b border-white/10 px-4 py-3 text-center text-xs uppercase tracking-[0.25em]"
+      className="border-b border-border/60 px-4 py-3 text-center text-xs uppercase tracking-[0.25em]"
       style={{ backgroundColor: background, color: textColor }}
     >
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 md:flex-row">
