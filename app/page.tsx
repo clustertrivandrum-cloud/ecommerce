@@ -1,65 +1,145 @@
+import Link from "next/link";
 import Image from "next/image";
+import { getCategories, getFeaturedProducts } from "@/lib/api/home";
+import { ProductCard } from "@/components/product/ProductCard";
+import { getHomeBannerSettings } from "@/lib/server/app-settings";
+import { AnnouncementBar } from "@/components/home/AnnouncementBar";
+import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 
-export default function Home() {
+export default async function Home() {
+  const [categories, featuredProducts, homeBanner] = await Promise.all([
+    getCategories(),
+    getFeaturedProducts(),
+    getHomeBannerSettings(),
+  ]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="flex-1 space-y-24 pb-24">
+      {homeBanner.announcement.enabled ? (
+        <AnnouncementBar
+          text={homeBanner.announcement.text}
+          linkLabel={homeBanner.announcement.linkLabel}
+          linkHref={homeBanner.announcement.linkHref}
+          background={homeBanner.announcement.background}
+          textColor={homeBanner.announcement.textColor}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      ) : null}
+
+      <HomeHeroCarousel slides={homeBanner.slides} />
+
+      {/* Trust Badges */}
+      <section className="px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 border-y border-border">
+          {[
+            { label: 'Anti-Tarnish', sub: 'Long-lasting shine' },
+            { label: 'Hypoallergenic', sub: 'Skin-friendly materials' },
+            { label: 'Free Delivery', sub: 'On all orders' },
+            { label: '5000+ Happy Customers', sub: 'Trusted quality' },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col items-center text-center gap-1">
+              <span className="text-accent-gold font-heading text-sm tracking-wide">{item.label}</span>
+              <span className="text-text-secondary text-xs">{item.sub}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Categories Scroll */}
+      <section className="px-6 md:px-12 max-w-7xl mx-auto space-y-8">
+        <div className="flex items-end justify-between">
+          <h2 className="text-3xl font-heading tracking-wide">Shop by Category</h2>
+          <Link href="/category" className="text-sm border-b border-text-primary/40 hover:text-accent-gold hover:border-accent-gold transition-colors pb-1 tracking-widest uppercase text-xs">
+            View All
+          </Link>
+        </div>
+        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x">
+          {categories.map((cat) => (
+            <Link 
+              key={cat.id} 
+              href={`/category/${cat.slug}`}
+              className="relative flex-shrink-0 w-40 h-52 md:w-52 md:h-64 bg-card overflow-hidden group snap-start"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              <Image 
+                src={cat.image} 
+                alt={cat.name} 
+                fill 
+                className="object-cover transition-transform duration-700 group-hover:scale-110" 
+                sizes="(max-width: 768px) 160px, 208px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col items-center justify-end">
+                <span className="font-heading text-sm tracking-widest text-text-primary text-center group-hover:text-accent-gold transition-colors uppercase">{cat.name}</span>
+                {cat.subcategories && cat.subcategories.length > 0 && (
+                  <span className="text-text-secondary text-[10px] mt-1">{cat.subcategories.length} styles</span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured / Bestsellers */}
+      <section className="px-6 md:px-12 max-w-7xl mx-auto space-y-8">
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="text-accent-gold text-xs uppercase tracking-widest block mb-1">Handpicked</span>
+            <h2 className="text-3xl font-heading tracking-wide">Bestsellers</h2>
+          </div>
+          <Link 
+             href="/products" 
+            className="text-sm border-b border-text-primary/40 hover:text-accent-gold hover:border-accent-gold transition-colors pb-1 hidden md:block tracking-widest uppercase text-xs"
+          >
+            Shop All
+          </Link>
+        </div>
+        {featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-6">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-16 text-center text-text-secondary border border-border bg-card">
+            <p>No featured products yet. Check back soon!</p>
+          </div>
+        )}
+      </section>
+
+      {/* Brand Promise Section */}
+      <section className="px-6 md:px-12 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="relative aspect-square md:aspect-[4/5] overflow-hidden">
+          <Image 
+            src={homeBanner.promiseImageUrl} 
+            alt="Cluster Fascination jewellery story" 
+            fill 
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        </div>
+        <div className="flex flex-col gap-6 md:pl-8">
+          <span className="text-accent-mint uppercase tracking-widest text-xs font-medium">{homeBanner.promiseKickerText}</span>
+          <h2 className="text-4xl md:text-5xl font-heading leading-tight">
+            {homeBanner.promiseTitle}
+          </h2>
+          <p className="text-text-secondary leading-relaxed">
+            {homeBanner.promiseDescription}
           </p>
+          <div className="grid grid-cols-3 gap-4 border-t border-border pt-6">
+            <div className="text-center">
+              <span className="block text-2xl font-heading text-accent-gold">18K</span>
+              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Gold Plated</span>
+            </div>
+            <div className="text-center">
+              <span className="block text-2xl font-heading text-accent-gold">1 Yr</span>
+              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Warranty</span>
+            </div>
+            <div className="text-center">
+              <span className="block text-2xl font-heading text-accent-gold">5K+</span>
+              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Customers</span>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
