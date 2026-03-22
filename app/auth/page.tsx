@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getCustomerProfileState, saveCustomerProfile } from '@/lib/api/customer';
@@ -8,7 +8,17 @@ import { useUserStore } from '@/store/userStore';
 import { useCartStore } from '@/store/cartStore';
 import type { User } from '@supabase/supabase-js';
 
-export default function AuthPage() {
+function AuthPageFallback() {
+  return (
+    <main className="max-w-md mx-auto px-6 py-32 min-h-screen flex flex-col justify-center">
+      <div className="bg-card p-8 border border-border mt-20 md:mt-0 shadow-2xl relative">
+        <p className="text-sm text-text-secondary animate-pulse">Loading sign in...</p>
+      </div>
+    </main>
+  );
+}
+
+function AuthPageContent() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [fullName, setFullName] = useState('');
@@ -262,5 +272,13 @@ export default function AuthPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthPageFallback />}>
+      <AuthPageContent />
+    </Suspense>
   );
 }

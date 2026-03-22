@@ -27,8 +27,16 @@ type WishlistProductRow = {
 
 type WishlistItemRow = {
   product_id: string;
-  products: WishlistProductRow;
+  products: WishlistProductRow | WishlistProductRow[] | null;
 };
+
+function getWishlistProduct(item: WishlistItemRow): WishlistProductRow | null {
+  if (Array.isArray(item.products)) {
+    return item.products[0] ?? null;
+  }
+
+  return item.products ?? null;
+}
 
 export default function WishlistPage() {
   const { user } = useUserStore();
@@ -81,30 +89,39 @@ export default function WishlistPage() {
         .eq('wishlist_id', wishlist[0].id);
 
       if (wishlistItems) {
-        const shaped = (wishlistItems as WishlistItemRow[]).map((item) => {
-          const p = item.products;
-          const variants = (p.product_variants || []).map((v) => {
-            const stock = (v.inventory_items || []).reduce(
-              (sum: number, row) => sum + (row?.available_quantity || 0),
-              0
-            );
-            return { ...v, stock };
+        const shaped = (wishlistItems as WishlistItemRow[])
+          .flatMap((item): Product[] => {
+            const p = getWishlistProduct(item);
+
+            if (!p) {
+              return [];
+            }
+
+            const variants = (p.product_variants || []).map((v) => {
+              const stock = (v.inventory_items || []).reduce(
+                (sum: number, row) => sum + (row?.available_quantity || 0),
+                0
+              );
+
+              return { ...v, stock };
+            });
+            const defaultVariant = variants.find((v) => v.stock > 0) || variants[0] || {};
+            const defaultMedia = p.product_media?.[0] || {};
+
+            return [{
+              id: p.id,
+              name: p.title,
+              slug: p.slug,
+              price: defaultVariant.price || 0,
+              original_price: defaultVariant.compare_at_price || undefined,
+              image: defaultMedia.media_url || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
+              stock: defaultVariant.stock || 0,
+              allow_preorder: defaultVariant.allow_preorder || false,
+              is_free_delivery: p.is_free_delivery ?? undefined,
+              variantId: defaultVariant.id
+            }];
           });
-          const defaultVariant = variants.find((v) => v.stock > 0) || variants[0] || {};
-          const defaultMedia = p.product_media?.[0] || {};
-          return {
-            id: p.id,
-            name: p.title,
-            slug: p.slug,
-            price: defaultVariant.price || 0,
-            original_price: defaultVariant.compare_at_price || undefined,
-            image: defaultMedia.media_url || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
-            stock: defaultVariant.stock || 0,
-            allow_preorder: defaultVariant.allow_preorder || false,
-            is_free_delivery: p.is_free_delivery,
-            variantId: defaultVariant.id
-          };
-        });
+
         setItems(shaped);
       }
       setLoading(false);

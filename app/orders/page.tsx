@@ -3,7 +3,7 @@
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { NoticeBanner } from '@/components/ui/NoticeBanner';
@@ -78,7 +78,20 @@ type RazorpayInstance = {
 
 type RazorpayConstructor = new (options: RazorpayCheckoutOptions) => RazorpayInstance;
 
-export default function OrdersPage() {
+function OrdersPageFallback() {
+  return (
+    <main className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24 min-h-screen">
+      <h1 className="text-3xl md:text-5xl font-heading tracking-tight mb-16 border-b border-border pb-8">
+        Order History
+      </h1>
+      <div className="py-20 text-center">
+        <p className="text-text-secondary animate-pulse">Loading orders...</p>
+      </div>
+    </main>
+  );
+}
+
+function OrdersPageContent() {
   const { user } = useUserStore();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -341,5 +354,13 @@ export default function OrdersPage() {
       )}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
     </main>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<OrdersPageFallback />}>
+      <OrdersPageContent />
+    </Suspense>
   );
 }
