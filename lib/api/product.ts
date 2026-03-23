@@ -167,6 +167,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const normalizedSlug = slug.trim().toLowerCase();
   const { data, error } = await supabase
     .from('products')
     .select(`
@@ -199,7 +200,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       ),
       product_media ( media_url, position )
     `)
-    .eq('slug', slug)
+    .eq('slug', normalizedSlug)
     .single();
 
   if (error || !data) return null;
