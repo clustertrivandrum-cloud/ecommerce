@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
@@ -17,20 +16,6 @@ export const metadata: Metadata = {
   description: "Premium mobile-first e-commerce experience",
 };
 
-const themeScript = `
-  (() => {
-    try {
-      const storedTheme = window.localStorage.getItem('cluster-theme');
-      const theme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
-      document.documentElement.dataset.theme = theme;
-      document.documentElement.style.colorScheme = theme;
-    } catch {
-      document.documentElement.dataset.theme = 'dark';
-      document.documentElement.style.colorScheme = 'dark';
-    }
-  })();
-`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,11 +28,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${playfair.variable} h-full antialiased scroll-smooth`}
     >
-      <head>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {themeScript}
-        </Script>
-      </head>
+      <head />
       <body className="min-h-full flex flex-col font-sans selection:bg-accent-gold/20">
         <ThemeProvider>
           <AuthSessionSync />
