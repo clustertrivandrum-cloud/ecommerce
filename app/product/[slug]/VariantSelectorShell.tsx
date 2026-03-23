@@ -251,12 +251,12 @@ export default function VariantSelectorShell({
           <div className="flex items-end gap-3 mb-6 pb-6 border-b border-border">
             <span className="text-3xl font-semibold">₹{price.toFixed(0)}</span>
             {compareAt && (
-              <span className="text-lg text-text-secondary/50 line-through font-light mb-0.5">
+              <span className="text-lg text-text-secondary/80 line-through font-light mb-0.5">
                 ₹{compareAt.toFixed(0)}
               </span>
             )}
             {discount > 0 && (
-              <span className="text-accent-mint text-sm font-medium mb-0.5">Save ₹{(compareAt! - price).toFixed(0)}</span>
+              <span className="text-accent-gold text-sm font-medium mb-0.5">Save ₹{(compareAt! - price).toFixed(0)}</span>
             )}
           </div>
 
@@ -264,12 +264,12 @@ export default function VariantSelectorShell({
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-text-secondary transition-colors hover:border-accent-gold hover:text-accent-gold"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/72 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-text-secondary backdrop-blur-sm transition-colors hover:border-accent-gold hover:text-accent-gold"
             >
               <Share2 className="h-4 w-4" />
               Share Product
             </button>
-            <span className="text-xs uppercase tracking-[0.22em] text-text-secondary/70">
+            <span className="text-xs uppercase tracking-[0.22em] text-text-secondary">
               Link preview now uses this product&apos;s own title, image, and description.
             </span>
           </div>
@@ -307,10 +307,10 @@ export default function VariantSelectorShell({
                             onClick={() => setSelected((prev) => ({ ...prev, [opt.name]: val }))}
                             className={`px-3 py-2 border text-sm rounded-md transition-colors ${
                               optionState.disabled
-                                ? "border-border text-text-secondary/40 cursor-not-allowed opacity-60"
+                                ? "border-border bg-card/60 text-text-secondary/50 cursor-not-allowed opacity-60"
                                 : active
                                 ? "border-text-primary text-text-primary bg-card"
-                                : "border-border text-text-secondary hover:border-text-primary"
+                                : "border-border bg-card/72 text-text-secondary hover:border-text-primary"
                             }`}
                           >
                             <span className="flex flex-col items-start gap-1">
@@ -372,15 +372,15 @@ export default function VariantSelectorShell({
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-y border-border">
             <div className="flex flex-col items-center gap-1 text-center">
-              <Truck className="w-4 h-4 text-accent-mint" />
+              <Truck className="w-4 h-4 text-accent-gold" />
               <span className="text-[10px] text-text-secondary uppercase tracking-widest">Free Delivery</span>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <Package className="w-4 h-4 text-accent-mint" />
+              <Package className="w-4 h-4 text-accent-gold" />
               <span className="text-[10px] text-text-secondary uppercase tracking-widest">Secure Pack</span>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <RotateCcw className="w-4 h-4 text-accent-mint" />
+              <RotateCcw className="w-4 h-4 text-accent-gold" />
               <span className="text-[10px] text-text-secondary uppercase tracking-widest">
                 {product.return_policy || "Easy Return"}
               </span>

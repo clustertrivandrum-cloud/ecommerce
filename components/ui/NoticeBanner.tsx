@@ -6,15 +6,15 @@ type NoticeTone = 'error' | 'success' | 'info';
 
 const toneStyles: Record<NoticeTone, { wrapper: string; icon: ReactNode }> = {
   error: {
-    wrapper: 'border-red-500/40 bg-red-950/20 text-red-300',
+    wrapper: 'notice-banner-error',
     icon: <AlertCircle className="h-4 w-4 shrink-0" />,
   },
   success: {
-    wrapper: 'border-accent-mint/40 bg-accent-mint/10 text-accent-mint',
+    wrapper: 'notice-banner-success',
     icon: <CheckCircle2 className="h-4 w-4 shrink-0" />,
   },
   info: {
-    wrapper: 'border-accent-gold/30 bg-accent-gold/10 text-accent-gold',
+    wrapper: 'notice-banner-info',
     icon: <Info className="h-4 w-4 shrink-0" />,
   },
 };

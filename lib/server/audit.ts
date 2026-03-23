@@ -10,8 +10,8 @@ type AuditPayload = {
   action: string
   entityType: string
   entityId: string
-  before?: any
-  after?: any
+  before?: unknown
+  after?: unknown
 }
 
 export async function logAudit(payload: AuditPayload) {

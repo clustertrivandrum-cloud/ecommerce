@@ -30,30 +30,52 @@
     --overlay-dot: rgb(255 255 255 / 0.55);
     --shadow-panel: 0 24px 80px rgb(0 0 0 / 0.45);
     --shadow-soft: 0 16px 40px rgb(0 0 0 / 0.22);
+    --logo-surface: rgb(255 255 255 / 0.96);
+    --logo-border: rgb(255 255 255 / 0.1);
+    --notice-error-bg: rgb(127 29 29 / 0.18);
+    --notice-error-border: rgb(248 113 113 / 0.36);
+    --notice-error-text: #fecaca;
+    --notice-success-bg: rgb(16 185 129 / 0.12);
+    --notice-success-border: rgb(110 231 183 / 0.3);
+    --notice-success-text: #a8d5c2;
+    --notice-info-bg: rgb(201 169 110 / 0.12);
+    --notice-info-border: rgb(201 169 110 / 0.28);
+    --notice-info-text: #e7c995;
     --page-background:
       radial-gradient(circle at top, rgb(168 213 194 / 0.12), transparent 32%),
       linear-gradient(180deg, #141414 0%, #0b0b0b 58%, #080808 100%);
   }
 
   html[data-theme="light"] {
-    --surface-primary: #f6fbf8;
+    --surface-primary: #fbfcfb;
     --surface-card: #ffffff;
-    --surface-muted: #eef7f2;
-    --text-primary: #181614;
-    --text-secondary: #61706a;
-    --accent-gold: #d7a1a8;
-    --accent-mint: #b7efe0;
-    --border-color: #d5e5de;
-    --overlay-control-bg: rgb(255 255 255 / 0.72);
-    --overlay-control-hover: rgb(255 255 255 / 0.9);
-    --overlay-control-border: rgb(24 22 20 / 0.12);
-    --overlay-control-text: #181614;
-    --overlay-dot: rgb(255 255 255 / 0.78);
-    --shadow-panel: 0 24px 72px rgb(71 104 91 / 0.16);
-    --shadow-soft: 0 14px 32px rgb(71 104 91 / 0.14);
+    --surface-muted: #f1f5f3;
+    --text-primary: #141816;
+    --text-secondary: #4f5d58;
+    --accent-gold: #b96d80;
+    --accent-mint: #7fc3b1;
+    --border-color: #bccdc6;
+    --overlay-control-bg: rgb(255 255 255 / 0.9);
+    --overlay-control-hover: rgb(255 255 255 / 0.97);
+    --overlay-control-border: rgb(22 25 23 / 0.14);
+    --overlay-control-text: #161917;
+    --overlay-dot: rgb(255 255 255 / 0.9);
+    --shadow-panel: 0 20px 56px rgb(71 104 91 / 0.12);
+    --shadow-soft: 0 12px 28px rgb(71 104 91 / 0.1);
+    --logo-surface: rgb(255 255 255 / 0.92);
+    --logo-border: rgb(22 25 23 / 0.08);
+    --notice-error-bg: #fff1f1;
+    --notice-error-border: #f5b6b6;
+    --notice-error-text: #b44040;
+    --notice-success-bg: #eef8f4;
+    --notice-success-border: #b7dfd2;
+    --notice-success-text: #246b57;
+    --notice-info-bg: #fbf2f3;
+    --notice-info-border: #e7c2cb;
+    --notice-info-text: #a95f73;
     --page-background:
-      radial-gradient(circle at top, rgb(183 239 224 / 0.54), transparent 40%),
-      linear-gradient(180deg, #fcfffd 0%, #f7fbf9 50%, #eef7f2 100%);
+      radial-gradient(circle at top, rgb(183 239 224 / 0.08), transparent 16%),
+      linear-gradient(180deg, #fdfefd 0%, #fafcfb 52%, #f6f9f7 100%);
   }
 
   html {
@@ -69,6 +91,7 @@
     min-height: 100vh;
     background-color: var(--color-primary);
     background-image: var(--page-background);
+    background-repeat: no-repeat;
     color: var(--color-text-primary);
     transition:
       background-color 240ms ease,
@@ -131,4 +154,28 @@
   background-color: var(--color-card);
   color: var(--color-text-primary);
   box-shadow: var(--shadow-soft);
+}
+
+@utility brand-logo-shell {
+  border: 1px solid var(--logo-border);
+  background-color: var(--logo-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility notice-banner-error {
+  border-color: var(--notice-error-border);
+  background-color: var(--notice-error-bg);
+  color: var(--notice-error-text);
+}
+
+@utility notice-banner-success {
+  border-color: var(--notice-success-border);
+  background-color: var(--notice-success-bg);
+  color: var(--notice-success-text);
+}
+
+@utility notice-banner-info {
+  border-color: var(--notice-info-border);
+  background-color: var(--notice-info-bg);
+  color: var(--notice-info-text);
 }

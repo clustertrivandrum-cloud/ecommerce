@@ -57,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {discount > 0 && !isSoldOut && (
-            <span className="bg-accent-mint text-primary text-[10px] px-2 py-0.5 font-bold tracking-wide">
+            <span className="bg-accent-mint/95 text-primary text-[10px] px-2 py-0.5 font-bold tracking-wide shadow-sm">
               {discount}% OFF
             </span>
           )}
@@ -72,14 +72,14 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           {product.stock > 0 && product.stock <= 5 && (
-            <span className="bg-red-900/80 text-red-200 text-[10px] px-2 py-0.5 font-medium tracking-wide">
+            <span className="bg-red-900/92 text-white text-[10px] px-2 py-0.5 font-medium tracking-wide shadow-sm">
               Only {product.stock} left
             </span>
           )}
         </div>
 
         {/* Quick hover overlay & CTA */}
-        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         
         {!isSoldOut && !isPreorder && (
           <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
@@ -102,7 +102,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ₹{product.price.toFixed(0)}
           </span>
           {product.original_price && (
-            <span className="text-xs text-text-secondary/60 line-through">
+            <span className="text-xs text-text-secondary/80 line-through">
               ₹{product.original_price.toFixed(0)}
             </span>
           )}

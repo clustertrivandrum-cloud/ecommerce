@@ -1,8 +1,23 @@
 'use client';
 
 import { X, Tag } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+
+type CouponRow = {
+  id: string;
+  code: string;
+  description: string | null;
+  discount_type: 'percentage' | 'fixed' | null;
+  discount_value: number | string | null;
+  min_order_value: number | string | null;
+  max_discount: number | string | null;
+  usage_limit: number | null;
+  used_count: number | null;
+  is_active: boolean | null;
+  starts_at: string | null;
+  expires_at: string | null;
+};
 
 interface CouponModalProps {
   isOpen: boolean;
@@ -11,10 +26,94 @@ interface CouponModalProps {
   cartTotal: number;
 }
 
+function toNumber(value: number | string | null | undefined) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getDiscountAmount(coupon: CouponRow, orderTotal: number) {
+  if (coupon.discount_type === 'percentage') {
+    const amount = orderTotal * (toNumber(coupon.discount_value) / 100);
+    const maxDiscount = toNumber(coupon.max_discount);
+    return maxDiscount > 0 ? Math.min(amount, maxDiscount) : amount;
+  }
+
+  return toNumber(coupon.discount_value);
+}
+
+function isCouponEligible(coupon: CouponRow, orderTotal: number) {
+  const now = new Date();
+
+  if (!coupon.is_active) return false;
+  if (coupon.starts_at && new Date(coupon.starts_at) > now) return false;
+  if (coupon.expires_at && new Date(coupon.expires_at) < now) return false;
+  if (coupon.usage_limit && (coupon.used_count || 0) >= coupon.usage_limit) return false;
+  if (toNumber(coupon.min_order_value) > 0 && orderTotal < toNumber(coupon.min_order_value)) return false;
+
+  return getDiscountAmount(coupon, orderTotal) > 0;
+}
+
+function getCouponOfferLabel(coupon: CouponRow) {
+  if (coupon.discount_type === 'percentage') {
+    const maxDiscount = toNumber(coupon.max_discount);
+    return `${toNumber(coupon.discount_value)}% off${maxDiscount > 0 ? ` up to ₹${maxDiscount}` : ''}`;
+  }
+
+  return `Flat ₹${toNumber(coupon.discount_value)} off`;
+}
+
 export function CouponModal({ isOpen, onClose, onApply, cartTotal }: CouponModalProps) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+
+    const loadCoupons = async () => {
+      setCouponsLoading(true);
+
+      const { data, error: fetchError } = await supabase
+        .from('coupons')
+        .select('id, code, description, discount_type, discount_value, min_order_value, max_discount, usage_limit, used_count, is_active, starts_at, expires_at')
+        .order('created_at', { ascending: false });
+
+      if (!cancelled) {
+        if (fetchError || !data) {
+          setCoupons([]);
+        } else {
+          setCoupons(data as CouponRow[]);
+        }
+        setCouponsLoading(false);
+      }
+    };
+
+    void loadCoupons();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  const eligibleCoupons = useMemo(
+    () =>
+      coupons
+        .filter((coupon) => isCouponEligible(coupon, cartTotal))
+        .sort((a, b) => getDiscountAmount(b, cartTotal) - getDiscountAmount(a, cartTotal)),
+    [coupons, cartTotal]
+  );
+
+  const applyCoupon = (coupon: CouponRow) => {
+    const discountAmount = getDiscountAmount(coupon, cartTotal);
+    if (discountAmount <= 0) return;
+
+    onApply(discountAmount, coupon.code);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -70,7 +169,68 @@ export function CouponModal({ isOpen, onClose, onApply, cartTotal }: CouponModal
 
         <form onSubmit={handleApply} className="space-y-4 text-sm">
           {error && <p className="text-red-400 text-xs bg-red-950/30 p-3 border border-red-500/50">{error}</p>}
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-text-secondary">Eligible coupons</p>
+              {eligibleCoupons.length > 0 ? (
+                <span className="text-[11px] uppercase tracking-[0.2em] text-accent-gold">
+                  {eligibleCoupons.length} available
+                </span>
+              ) : null}
+            </div>
+
+            <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+              {couponsLoading ? (
+                <div className="border border-border bg-primary/20 p-4 text-xs text-text-secondary">
+                  Loading coupons...
+                </div>
+              ) : eligibleCoupons.length > 0 ? (
+                eligibleCoupons.map((coupon) => (
+                  <button
+                    key={coupon.id}
+                    type="button"
+                    onClick={() => applyCoupon(coupon)}
+                    className="w-full border border-border bg-primary/20 p-4 text-left transition-colors hover:border-accent-gold hover:bg-card"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-[0.18em] text-text-primary">
+                          {coupon.code}
+                        </p>
+                        <p className="mt-1 text-sm text-text-primary">{getCouponOfferLabel(coupon)}</p>
+                        {coupon.description ? (
+                          <p className="mt-1 text-xs text-text-secondary">{coupon.description}</p>
+                        ) : null}
+                        {toNumber(coupon.min_order_value) > 0 ? (
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-text-secondary">
+                            Valid on orders above ₹{toNumber(coupon.min_order_value)}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-accent-mint">
+                          Save ₹{getDiscountAmount(coupon, cartTotal).toFixed(0)}
+                        </span>
+                        <span className="mt-3 inline-block border border-border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold">
+                          Apply
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="border border-border bg-primary/20 p-4 text-sm text-text-secondary">
+                  No eligible coupons for this cart total right now.
+                </div>
+              )}
+            </div>
+          </div>
           
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.24em] text-text-secondary">Have a code?</p>
+          </div>
+
           <input
             required
             placeholder="Enter promo code"

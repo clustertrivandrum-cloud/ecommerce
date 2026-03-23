@@ -51,18 +51,18 @@ export function HomeHeroCarousel({ slides }: HomeHeroCarouselProps) {
         </div>
       ))}
 
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-primary/95 via-primary/50 to-transparent" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/72 via-black/32 to-transparent" />
 
       <div className="absolute inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-7xl flex-col gap-4 p-6 md:p-16">
         <span className="w-fit border border-accent-gold/30 px-4 py-1 text-sm font-medium uppercase tracking-[0.3em] text-accent-gold">
           {activeSlide.badgeText}
         </span>
-        <h1 className="text-5xl font-heading font-medium leading-[1.05] tracking-tight md:text-7xl">
+        <h1 className="text-5xl font-heading font-medium leading-[1.05] tracking-tight text-white md:text-7xl">
           {activeSlide.title}
           <br />
           <span className="text-accent-gold">{activeSlide.highlightText}</span>
         </h1>
-        <p className="mt-2 mb-4 max-w-md text-base leading-relaxed text-text-secondary">
+        <p className="mt-2 mb-4 max-w-md text-base leading-relaxed text-white/82">
           {activeSlide.description}
         </p>
         <Link

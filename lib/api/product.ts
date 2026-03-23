@@ -60,6 +60,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
       slug,
       is_free_delivery,
       material,
+      collection,
       rating,
       review_count,
       brand,
@@ -100,8 +101,16 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
     }
   }
 
-  if (search) {
-    query = query.ilike('title', `%${search}%`);
+  const searchTerm = search?.trim().replace(/[,%]/g, ' ');
+
+  if (searchTerm) {
+    const pattern = `%${searchTerm}%`;
+    query = query.or([
+      `title.ilike.${pattern}`,
+      `brand.ilike.${pattern}`,
+      `material.ilike.${pattern}`,
+      `collection.ilike.${pattern}`,
+    ].join(','));
   }
 
   const { data, error } = await query.limit(50);
@@ -139,6 +148,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
       rating: p.rating,
       review_count: p.review_count,
       brand: p.brand,
+      collection: p.collection,
       categoryId: p.categories?.id,
       parentCategoryId: p.categories?.parent_id,
       variantId: defaultVariant.id,

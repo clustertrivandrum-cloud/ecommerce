@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram, Twitter } from 'lucide-react';
 
@@ -6,9 +7,17 @@ export function Footer() {
     <footer className="border-t border-border mt-32 py-16 px-6 lg:px-12 bg-card">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
         <div className="col-span-1 md:col-span-2">
-          <h2 className="text-3xl font-heading mb-6 tracking-widest text-text-primary">
-            CLUSTER
-          </h2>
+          <Link href="/" className="mb-6 inline-flex">
+            <span className="brand-logo-shell flex h-20 w-20 items-center justify-center rounded-full p-2">
+              <Image
+                src="/logo.svg"
+                alt="Cluster Fascination"
+                width={80}
+                height={80}
+                className="h-full w-full object-contain"
+              />
+            </span>
+          </Link>
           <p className="text-text-secondary max-w-sm font-sans mb-8">
             Curated elegance, redefined for the modern aesthete. 
             Mobile-first, high-conversion experiences.

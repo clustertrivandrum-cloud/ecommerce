@@ -106,14 +106,14 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
           </NoticeBanner>
         ) : null}
 
-        <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-card/82 px-4 py-3 backdrop-blur-sm">
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-text-secondary">Quantity</div>
             <div className="mt-1 text-sm text-text-secondary">
               {effectiveStock > 0 ? `${effectiveStock} available` : allowPreorder ? 'Available on preorder' : 'Currently unavailable'}
             </div>
           </div>
-          <div className="inline-flex items-center rounded-full border border-border">
+          <div className="inline-flex items-center rounded-full border border-border bg-primary/5">
             <button
               type="button"
               onClick={decrementQuantity}
@@ -150,7 +150,7 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
           type="button"
           onClick={handleWishlist}
           disabled={wishlistLoading}
-          className={`w-full py-4 border text-xs font-medium tracking-widest uppercase transition-colors ${isWishlisted ? 'border-accent-gold text-accent-gold bg-card' : 'border-border text-text-secondary hover:bg-card'} disabled:opacity-60`}
+          className={`w-full py-4 border text-xs font-medium tracking-widest uppercase transition-colors ${isWishlisted ? 'border-accent-gold text-accent-gold bg-card/82' : 'border-border bg-card/72 text-text-secondary hover:bg-card'} disabled:opacity-60`}
         >
           <span className="inline-flex items-center gap-2">
             <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />

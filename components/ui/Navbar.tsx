@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, Menu, Search, User, X, ChevronRight, Package, LogOut } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
@@ -61,6 +62,35 @@ export function Navbar() {
     };
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isTypingTarget =
+        target?.isContentEditable ||
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT';
+
+      if (isTypingTarget) return;
+
+      if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        setMobileMenuOpen(false);
+        setSearchOpen(true);
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setMobileMenuOpen(false);
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) return;
@@ -77,11 +107,11 @@ export function Navbar() {
       <header 
         className={cn(
           "fixed top-0 w-full z-50 transition-all duration-300",
-          scrolled ? "bg-primary/90 backdrop-blur-md border-b border-border py-4" : "bg-transparent py-6"
+          scrolled ? "bg-primary/90 backdrop-blur-md border-b border-border py-4 md:py-6" : "bg-transparent py-6 md:py-8"
         )}
       >
-        <div className="flex items-center justify-between px-6 max-w-7xl mx-auto">
-          <div className="flex items-center gap-6 flex-1">
+        <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6">
+          <div className="flex items-center gap-4 md:gap-6 min-w-0">
             <button
               type="button"
               aria-label="Open menu"
@@ -92,33 +122,44 @@ export function Navbar() {
             </button>
             <button 
               onClick={() => setSearchOpen(true)}
+              title="Search (/)"
               className="hidden lg:block hover:text-accent-gold transition-colors"
             >
               <Search className="w-5 h-5" />
             </button>
             <Link 
               href="/products" 
-              className="hidden lg:block text-xs font-medium tracking-widest uppercase hover:text-accent-gold transition-colors"
+              className="hidden md:block text-xs font-medium tracking-widest uppercase hover:text-accent-gold transition-colors"
             >
               Shop All
             </Link>
           </div>
 
-          <Link href="/" className="flex-1 text-center group">
-            <span className="text-xl font-heading tracking-widest font-medium group-hover:text-accent-gold transition-colors">
-              CLUSTER FASCINATION
-            </span>   
+          <Link href="/" className="group flex justify-center self-center px-2 md:px-4">
+            <span className="brand-logo-shell flex h-12 w-12 items-center justify-center rounded-full p-1.5 transition-transform group-hover:scale-[1.02] md:h-14 md:w-14 md:p-1.5">
+              <Image
+                src="/logo.svg"
+                alt="Cluster Fascination"
+                width={64}
+                height={64}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </span>
           </Link>
 
-          <div className="flex items-center justify-end gap-6 flex-1">
+          <div className="flex items-center justify-end gap-4 md:gap-6 min-w-0">
             <button 
               onClick={() => setSearchOpen(true)}
+              title="Search (/)"
               className="hover:text-accent-mint transition-colors lg:hidden"
             >
               <Search className="w-5 h-5" />
             </button>
 
-            <ThemeToggle compact />
+            <div className="hidden lg:block">
+              <ThemeToggle compact />
+            </div>
             
             <Link href="/profile" className="hidden lg:block hover:text-accent-gold transition-colors">
               <User className="w-5 h-5" />

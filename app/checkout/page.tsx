@@ -2,7 +2,7 @@
 
 import { useCartStore } from '@/store/cartStore';
 import { useUserStore } from '@/store/userStore';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -118,6 +118,7 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const { user } = useUserStore();
   const router = useRouter();
+  const checkoutFlowRef = useRef<HTMLDivElement | null>(null);
   
   const [step, setStep] = useState<'contact' | 'shipping' | 'payment'>('contact');
   const [loading, setLoading] = useState(false);
@@ -278,6 +279,17 @@ export default function CheckoutPage() {
       formData.state &&
       formData.pincode
   );
+  const orderTotal = Math.max(0, total - (appliedDiscount?.amount || 0) + shippingCost);
+  const contactCtaLabel = 'Continue to Shipping';
+  const shippingCtaLabel = 'Continue to Payment';
+  const paymentAmountLabel = `Pay Now • ₹${orderTotal.toFixed(2)}`;
+  const paymentCtaLabel = loading
+    ? 'Processing...'
+    : !checkoutConfigLoaded
+      ? 'Checking Payment...'
+      : !paymentsEnabled
+        ? 'Payments Unavailable'
+        : paymentAmountLabel;
 
   const openAddAddressModal = () => {
     setEditingAddress(null);
@@ -478,6 +490,25 @@ export default function CheckoutPage() {
     }
   };
 
+  const scrollCheckoutFlowToTop = useCallback(() => {
+    const sectionTop = checkoutFlowRef.current?.getBoundingClientRect().top;
+    if (sectionTop === undefined) return;
+
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + sectionTop - 132),
+      behavior: 'smooth',
+    });
+  }, []);
+
+  const moveToStep = (nextStep: 'contact' | 'shipping' | 'payment') => {
+    setStep(nextStep);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        scrollCheckoutFlowToTop();
+      });
+    });
+  };
+
   if (items.length === 0) {
     return (
       <main className="max-w-7xl mx-auto px-6 md:px-12 py-32 flex flex-col items-center">
@@ -489,15 +520,43 @@ export default function CheckoutPage() {
     );
   }
 
+  const handlePrimaryAction = () => {
+    if (step === 'contact') {
+      moveToStep('shipping');
+      return;
+    }
+
+    if (step === 'shipping') {
+      moveToStep('payment');
+      return;
+    }
+
+    void handleCheckout();
+  };
+
+  const isPrimaryActionDisabled =
+    step === 'contact'
+      ? !isContactStepValid
+      : step === 'payment'
+        ? loading || !checkoutConfigLoaded || !paymentsEnabled
+        : false;
+
+  const primaryActionLabel =
+    step === 'contact'
+      ? contactCtaLabel
+      : step === 'shipping'
+        ? shippingCtaLabel
+        : paymentCtaLabel;
+
   return (
-    <main className="max-w-7xl mx-auto px-6 md:px-12 py-16 min-h-screen">
-      <Link href="/cart" className="flex items-center gap-2 text-text-secondary hover:text-accent-gold transition-colors mb-8 text-sm uppercase tracking-widest font-medium">
+    <main className="mx-auto min-h-screen max-w-7xl px-4 pb-32 pt-8 md:px-12 md:py-16 md:pb-16">
+      <Link href="/cart" className="mb-6 flex items-center gap-2 text-[11px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-accent-gold md:mb-8 md:text-sm">
         <ArrowLeft className="w-4 h-4" /> Return to Cart
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-24">
         {/* Checkout Flow */}
-        <div className="space-y-12">
+        <div ref={checkoutFlowRef} className="space-y-8 md:space-y-12">
           {checkoutNotice && (
             <NoticeBanner
               tone={checkoutNotice.tone}
@@ -508,37 +567,97 @@ export default function CheckoutPage() {
           )}
 
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-4 text-xs font-medium tracking-widest uppercase">
+          <nav className="flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-[0.22em] md:text-xs md:tracking-widest">
             <button 
-              onClick={() => setStep('contact')}
-              className={`${step === 'contact' ? 'text-accent-gold font-bold' : 'text-text-secondary'} hover:text-text-primary`}
+              onClick={() => moveToStep('contact')}
+              className={`${step === 'contact' ? 'text-accent-gold font-bold' : 'text-text-secondary'} rounded-full border px-3 py-2 transition-colors hover:text-text-primary ${step === 'contact' ? 'border-accent-gold/40 bg-accent-gold/10' : 'border-border bg-card/60'}`}
             >
               Contact
             </button>
             <span className="text-border">/</span>
             <button 
               disabled={step === 'contact'}
-              onClick={() => setStep('shipping')}
-              className={`${step === 'shipping' ? 'text-accent-gold font-bold' : 'text-text-secondary'} ${step === 'contact' ? 'opacity-50 cursor-not-allowed' : 'hover:text-text-primary'}`}
+              onClick={() => moveToStep('shipping')}
+              className={`${step === 'shipping' ? 'text-accent-gold font-bold' : 'text-text-secondary'} rounded-full border px-3 py-2 transition-colors ${step === 'contact' ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary'} ${step === 'shipping' ? 'border-accent-gold/40 bg-accent-gold/10' : 'border-border bg-card/60'}`}
             >
               Shipping
             </button>
             <span className="text-border">/</span>
             <button 
               disabled={step !== 'payment'}
-              className={`${step === 'payment' ? 'text-accent-gold font-bold' : 'text-text-secondary'} ${step !== 'payment' ? 'opacity-50 cursor-not-allowed' : 'hover:text-text-primary'}`}
+              className={`${step === 'payment' ? 'text-accent-gold font-bold' : 'text-text-secondary'} rounded-full border px-3 py-2 transition-colors ${step !== 'payment' ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary'} ${step === 'payment' ? 'border-accent-gold/40 bg-accent-gold/10' : 'border-border bg-card/60'}`}
             >
               Payment
             </button>
           </nav>
 
+          <details className="rounded-[1.25rem] border border-border bg-card/70 p-4 lg:hidden" open={step === 'payment'}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-text-secondary">Order Summary</p>
+                <p className="mt-2 text-lg font-heading text-text-primary">₹{orderTotal.toFixed(2)}</p>
+              </div>
+              <span className="text-xs uppercase tracking-[0.22em] text-accent-gold">View details</span>
+            </summary>
+
+            <div className="mt-4 space-y-4 border-t border-border pt-4 text-sm">
+              {items.map((item) => (
+                <div key={`${item.id}-${item.variantId || 'default'}-mobile`} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="line-clamp-1 block text-text-primary">{item.name}</span>
+                    <span className="mt-1 block text-xs text-text-secondary">
+                      Qty {item.quantity}{item.variantLabel ? ` • ${item.variantLabel}` : ''}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-text-primary">₹{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+
+              <div className="space-y-2 border-t border-border pt-4 text-sm">
+                <div className="flex justify-between text-text-secondary">
+                  <span>Subtotal</span>
+                  <span>₹{total.toFixed(2)}</span>
+                </div>
+                {appliedDiscount && (
+                  <div className="flex justify-between text-accent-mint">
+                    <span>Discount</span>
+                    <span>-₹{appliedDiscount.amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-text-secondary">
+                  <span>Shipping</span>
+                  <span>
+                    {formData.state
+                      ? shippingCost === 0
+                        ? 'FREE'
+                        : `₹${shippingCost.toFixed(2)}`
+                      : 'Enter state'}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 text-base font-heading text-text-primary">
+                  <span>Total</span>
+                  <span className="text-accent-gold">₹{orderTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {!appliedDiscount && (
+                <button
+                  onClick={() => setCouponModalOpen(true)}
+                  className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-accent-gold transition-colors hover:text-text-primary"
+                >
+                  <Tag className="h-4 w-4" /> Apply Coupon
+                </button>
+              )}
+            </div>
+          </details>
+
           {/* Contact Step */}
           {step === 'contact' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-sm">
-              <h2 className="text-2xl font-heading mb-6">Contact Information</h2>
+              <h2 className="mb-4 text-2xl font-heading md:mb-6">Contact Information</h2>
               
               {!user && (
-                <div className="mb-6 p-4 border border-border bg-card">
+                <div className="mb-6 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none">
                   <p className="text-text-secondary mb-4">Already have an account?</p>
                   <Link href="/auth?redirect=/checkout" className="text-text-primary underline underline-offset-4 hover:text-accent-gold transition-colors">
                     Log in for faster checkout
@@ -558,7 +677,7 @@ export default function CheckoutPage() {
               />
 
               {user && (
-                <div className="space-y-4 border border-border bg-card p-5">
+                <div className="space-y-4 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none md:p-5">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-heading">Saved Addresses</h3>
@@ -586,7 +705,7 @@ export default function CheckoutPage() {
                       {savedAddresses.map((address) => (
                         <div
                           key={address.id}
-                          className={`border p-4 transition-colors ${
+                          className={`rounded-[1rem] border p-4 transition-colors md:rounded-none ${
                             selectedAddressId === address.id ? 'border-accent-gold bg-primary/40' : 'border-border'
                           }`}
                         >
@@ -623,8 +742,8 @@ export default function CheckoutPage() {
                 </div>
               )}
               
-              <h2 className="text-2xl font-heading mb-6 mt-12">Shipping Address</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="mb-4 mt-10 text-2xl font-heading md:mb-6 md:mt-12">Shipping Address</h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <input name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name" className="col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
                 <input name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name" className="col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
                 <input name="address" value={formData.address} onChange={handleChange} placeholder="Address" className="col-span-2 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
@@ -647,11 +766,11 @@ export default function CheckoutPage() {
               </div>
 
               <button 
-                onClick={() => setStep('shipping')}
+                onClick={() => moveToStep('shipping')}
                 disabled={!isContactStepValid}
-                className="w-full mt-8 bg-text-primary text-primary py-4 font-bold tracking-widest uppercase transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98] disabled:opacity-50"
+                className="mt-8 hidden w-full bg-text-primary py-4 font-bold uppercase tracking-widest text-primary transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98] disabled:opacity-50 md:block"
               >
-                Continue to Shipping
+                {contactCtaLabel}
               </button>
             </div>
           )}
@@ -659,9 +778,9 @@ export default function CheckoutPage() {
           {/* Shipping Step */}
           {step === 'shipping' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-sm">
-              <h2 className="text-2xl font-heading mb-6">Delivery Charge</h2>
+              <h2 className="mb-4 text-2xl font-heading md:mb-6">Delivery Charge</h2>
 
-              <div className="border border-border bg-card p-6 space-y-4">
+              <div className="space-y-4 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none md:p-6">
                 <div className="flex justify-between gap-4">
                   <span>Orders of ₹{shippingSettings.freeShippingThreshold} and above</span>
                   <span className="font-bold text-accent-gold">FREE</span>
@@ -676,7 +795,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="border border-accent-gold bg-card p-6">
+              <div className="rounded-[1.25rem] border border-accent-gold bg-card p-4 md:rounded-none md:p-6">
                 <div className="flex justify-between gap-4 text-base">
                   <span>
                     Current delivery charge
@@ -693,10 +812,10 @@ export default function CheckoutPage() {
               </div>
 
               <button 
-                onClick={() => setStep('payment')}
-                className="w-full mt-8 bg-text-primary text-primary py-4 font-bold tracking-widest uppercase transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98]"
+                onClick={() => moveToStep('payment')}
+                className="mt-8 hidden w-full bg-text-primary py-4 font-bold uppercase tracking-widest text-primary transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98] md:block"
               >
-                Continue to Payment
+                {shippingCtaLabel}
               </button>
             </div>
           )}
@@ -704,8 +823,8 @@ export default function CheckoutPage() {
           {/* Payment Step */}
           {step === 'payment' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-sm">
-              <h2 className="text-2xl font-heading mb-6">Payment</h2>
-              <p className="text-text-secondary mb-6 flex items-center gap-2">
+              <h2 className="mb-4 text-2xl font-heading md:mb-6">Payment</h2>
+              <p className="mb-6 flex items-center gap-2 text-text-secondary">
                 <Lock className="w-4 h-4" /> All transactions are secure and encrypted.
               </p>
 
@@ -715,7 +834,7 @@ export default function CheckoutPage() {
                 </NoticeBanner>
               )}
               
-              <div className="border border-border bg-card p-6">
+              <div className="rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none md:p-6">
                 <div className="flex flex-col items-center justify-center py-6">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="font-heading text-lg">Razorpay Secure</span>
@@ -731,16 +850,16 @@ export default function CheckoutPage() {
               <button 
                 onClick={handleCheckout}
                 disabled={loading || !checkoutConfigLoaded || !paymentsEnabled}
-                className="w-full mt-8 bg-accent-mint text-primary py-4 font-bold tracking-widest uppercase transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                className="mt-8 hidden w-full bg-text-primary py-4 font-bold uppercase tracking-widest text-primary transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98] disabled:opacity-50 md:block"
               >
-                {loading ? 'Processing...' : !checkoutConfigLoaded ? 'Checking Payment...' : !paymentsEnabled ? 'Payments Unavailable' : 'Pay Now'}
+                {paymentCtaLabel}
               </button>
             </div>
           )}
         </div>
 
         {/* Order Summary Lateral */}
-        <div className="bg-card p-8 h-max sticky top-32 border border-border">
+        <div className="sticky top-32 hidden h-max border border-border bg-card p-8 lg:block">
           <h2 className="text-xl font-heading mb-6 border-b border-border pb-6">Order Summary</h2>
           <div className="space-y-4 max-h-[40vh] overflow-y-auto w-full pr-4 mb-6">
             {items.map(item => (
@@ -795,7 +914,7 @@ export default function CheckoutPage() {
           
           <div className="flex justify-between items-center text-xl font-heading pt-6 border-t border-border">
             <span>Total</span>
-            <span className="text-accent-gold">₹{Math.max(0, total - (appliedDiscount?.amount || 0) + shippingCost).toFixed(2)}</span>
+            <span className="text-accent-gold">₹{orderTotal.toFixed(2)}</span>
           </div>
 
           <div className="mt-8 pt-6 border-t border-border space-y-4">
@@ -810,6 +929,25 @@ export default function CheckoutPage() {
               <span className="text-xs tracking-wide">Satisfaction Guaranteed</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-primary/95 p-4 backdrop-blur-md lg:hidden">
+        <div className="mx-auto max-w-7xl">
+          <button
+            type="button"
+            onClick={handlePrimaryAction}
+            disabled={isPrimaryActionDisabled}
+            className="w-full bg-text-primary px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-primary transition-all hover:bg-accent-gold hover:text-primary active:scale-[0.98] disabled:opacity-50"
+          >
+            {primaryActionLabel}
+          </button>
+        </div>
+        <div className="mx-auto mt-3 flex max-w-7xl items-center justify-between px-1 text-sm">
+          <span className="text-text-secondary">
+            {step === 'payment' ? 'Amount due' : 'Estimated total'}
+          </span>
+          <span className="font-heading text-lg text-accent-gold">₹{orderTotal.toFixed(2)}</span>
         </div>
       </div>
 

@@ -56,14 +56,14 @@ export default function CategoryPage() {
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 sizes="100vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/82 via-black/36 to-transparent" />
               <div className="absolute left-8 bottom-8">
                 {cat.bannerKicker ? (
                   <span className="mb-2 block text-xs uppercase tracking-[0.28em] text-accent-gold">{cat.bannerKicker}</span>
                 ) : null}
-                <span className="text-3xl font-heading">{cat.bannerTitle || cat.name}</span>
+                <span className="text-3xl font-heading text-white">{cat.bannerTitle || cat.name}</span>
                 {cat.bannerDescription ? (
-                  <p className="mt-2 max-w-lg text-sm text-text-secondary">{cat.bannerDescription}</p>
+                  <p className="mt-2 max-w-lg text-sm text-white/88">{cat.bannerDescription}</p>
                 ) : null}
               </div>
             </Link>

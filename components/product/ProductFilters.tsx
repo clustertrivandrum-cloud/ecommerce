@@ -13,15 +13,24 @@ interface ProductFiltersProps {
 export function ProductFilters({ onApply, categories }: ProductFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sort, setSort] = useState('featured');
+  const [activeFilters, setActiveFilters] = useState<ExtendedFilters>({
+    priceRange: 'all',
+    sizes: [],
+    sort: 'featured',
+  });
 
   const handleApplyFilters = (filters: ExtendedFilters) => {
-    onApply?.({ ...filters, sort });
+    const nextFilters = { ...filters, sort };
+    setActiveFilters(nextFilters);
+    onApply?.(nextFilters);
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSort = e.target.value;
     setSort(newSort);
-    onApply?.({ priceRange: 'all', sizes: [], sort: newSort });
+    const nextFilters = { ...activeFilters, sort: newSort };
+    setActiveFilters(nextFilters);
+    onApply?.(nextFilters);
   };
 
   return (
@@ -29,12 +38,12 @@ export function ProductFilters({ onApply, categories }: ProductFiltersProps) {
       <div className="flex items-center gap-3">
         <button 
           onClick={() => setIsFilterOpen(true)}
-          className="flex items-center gap-2 border border-border px-4 py-2 hover:bg-card transition-colors text-xs font-medium tracking-widest uppercase"
+          className="flex items-center gap-2 border border-border bg-card/72 px-4 py-2 backdrop-blur-sm hover:bg-card transition-colors text-xs font-medium tracking-widest uppercase"
         >
           <SlidersHorizontal className="w-4 h-4" /> Filter
         </button>
         
-        <div className="border border-border px-4 py-2 hover:bg-card transition-colors">
+        <div className="border border-border bg-card/72 px-4 py-2 backdrop-blur-sm hover:bg-card transition-colors">
           <select 
             value={sort}
             onChange={handleSortChange}

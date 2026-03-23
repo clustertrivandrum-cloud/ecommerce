@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
@@ -43,13 +44,15 @@ export default function RootLayout({
       className={`${playfair.variable} h-full antialiased scroll-smooth`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
       </head>
       <body className="min-h-full flex flex-col font-sans selection:bg-accent-gold/20">
         <ThemeProvider>
           <AuthSessionSync />
           <Navbar />
-          <div className="flex-1 pt-[88px]">{children}</div>
+          <div className="flex-1 pt-[88px] md:pt-[112px]">{children}</div>
           <Footer />
         </ThemeProvider>
       </body>

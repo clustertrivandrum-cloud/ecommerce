@@ -77,14 +77,14 @@ export default function CategorySlugPage({ params }: PageProps) {
               className="object-cover md:hidden"
               sizes="100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/55 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/82 via-black/44 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 z-10 p-6 md:p-10">
               <div className="max-w-2xl space-y-4">
                 <span className="inline-flex border border-accent-gold/30 px-3 py-1 text-xs uppercase tracking-[0.28em] text-accent-gold">
                   {categoryBanner.bannerKicker}
                 </span>
-                <h1 className="text-4xl font-heading tracking-tight md:text-6xl">{categoryBanner.bannerTitle}</h1>
-                <p className="max-w-xl text-sm leading-6 text-text-secondary md:text-base">{categoryBanner.bannerDescription}</p>
+                <h1 className="text-4xl font-heading tracking-tight text-white md:text-6xl">{categoryBanner.bannerTitle}</h1>
+                <p className="max-w-xl text-sm leading-6 text-white/88 md:text-base">{categoryBanner.bannerDescription}</p>
               </div>
             </div>
           </div>

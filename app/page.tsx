@@ -66,11 +66,15 @@ export default async function Home() {
                 className="object-cover transition-transform duration-700 group-hover:scale-110" 
                 sizes="(max-width: 768px) 160px, 208px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/82 via-28% to-transparent" />
               <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col items-center justify-end">
-                <span className="font-heading text-sm tracking-widest text-text-primary text-center group-hover:text-accent-gold transition-colors uppercase">{cat.name}</span>
+                <span className="font-heading text-sm tracking-widest text-white text-center [text-shadow:0_3px_18px_rgba(0,0,0,0.95)] group-hover:text-accent-gold transition-colors uppercase">
+                  {cat.name}
+                </span>
                 {cat.subcategories && cat.subcategories.length > 0 && (
-                  <span className="text-text-secondary text-[10px] mt-1">{cat.subcategories.length} styles</span>
+                  <span className="mt-1 text-[10px] text-white/95 [text-shadow:0_3px_14px_rgba(0,0,0,0.95)]">
+                    {cat.subcategories.length} styles
+                  </span>
                 )}
               </div>
             </Link>
@@ -117,7 +121,7 @@ export default async function Home() {
           />
         </div>
         <div className="flex flex-col gap-6 md:pl-8">
-          <span className="text-accent-mint uppercase tracking-widest text-xs font-medium">{homeBanner.promiseKickerText}</span>
+          <span className="text-accent-gold uppercase tracking-widest text-xs font-medium">{homeBanner.promiseKickerText}</span>
           <h2 className="text-4xl md:text-5xl font-heading leading-tight">
             {homeBanner.promiseTitle}
           </h2>
