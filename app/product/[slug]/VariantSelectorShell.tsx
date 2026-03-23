@@ -101,7 +101,11 @@ export default function VariantSelectorShell({
   const price = selectedVariant?.price ?? product.price ?? 0;
   const compareAt = selectedVariant?.compare_at_price ?? product.original_price;
   const discount = compareAt ? Math.round(((compareAt - price) / compareAt) * 100) : 0;
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  const images = selectedVariant?.images && selectedVariant.images.length > 0
+    ? selectedVariant.images
+    : product.images && product.images.length > 0
+      ? product.images
+      : [product.image];
   const activeImage = images[activeImageIndex] || images[0];
   const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
   const selectedVariantLabel = formatVariantLabel(selectedVariant?.options);
@@ -110,6 +114,10 @@ export default function VariantSelectorShell({
     setActiveImageIndex(0);
     setShareState(null);
   }, [product.id]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [selectedVariant?.id]);
 
   async function handleShare() {
     const shareUrl = window.location.href;
@@ -365,6 +373,7 @@ export default function VariantSelectorShell({
                 stock: isUnavailable ? 0 : currentStock,
                 allowPreorder,
                 label: selectedVariantLabel,
+                image: images[0] || product.image,
               }}
             />
           </div>

@@ -70,6 +70,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
         compare_at_price,
         allow_preorder,
         inventory_items ( location_id, available_quantity ),
+        variant_media ( media_url, position ),
         variant_option_values (
           option_value_id,
           product_option_values ( value, option_id, product_options ( name ) )
@@ -119,6 +120,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
 
   return data.map((p: Record<string, any>) => {
     const variants = (p.product_variants || []).map((v: any) => {
+      const sortedVariantMedia = (v.variant_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
       const stock = (v.inventory_items || []).reduce(
         (sum: number, row: any) => sum + (row?.available_quantity || 0),
         0
@@ -129,10 +131,17 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
         const optVal = ov.product_option_values?.value;
         if (optName && optVal) options[optName] = optVal;
       });
-      return { ...v, stock, options };
+      return {
+        ...v,
+        stock,
+        options,
+        images: sortedVariantMedia.map((media: Record<string, string>) => media.media_url).filter(Boolean),
+      };
     });
     const defaultVariant = variants.find((v: any) => v.stock > 0) || variants[0] || {};
     const sortedMedia = (p.product_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
+    const effectiveImages = defaultVariant.images?.length ? defaultVariant.images : sortedMedia.map((m: Record<string, string>) => m.media_url);
+    const primaryImage = effectiveImages[0] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
     const stock = defaultVariant.stock || 0;
     return {
       id: p.id,
@@ -140,8 +149,8 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
       slug: p.slug,
       price: defaultVariant.price || 0,
       original_price: defaultVariant.compare_at_price || undefined,
-      image: sortedMedia[0]?.media_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-      images: sortedMedia.map((m: Record<string, string>) => m.media_url),
+      image: primaryImage,
+      images: effectiveImages,
       stock,
       allow_preorder: defaultVariant.allow_preorder || false,
       is_free_delivery: p.is_free_delivery,
@@ -182,6 +191,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
         compare_at_price,
         allow_preorder,
         inventory_items ( location_id, available_quantity ),
+        variant_media ( media_url, position ),
         variant_option_values (
           option_value_id,
           product_option_values ( value, option_id, product_options ( name ) )
@@ -196,6 +206,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   const d = data as any;
   const variants = (d.product_variants || []).map((v: any) => {
+    const sortedVariantMedia = (v.variant_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
     const stock = (v.inventory_items || []).reduce(
       (sum: number, row: any) => sum + (row?.available_quantity || 0),
       0
@@ -206,10 +217,17 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       const optVal = ov.product_option_values?.value;
       if (optName && optVal) options[optName] = optVal;
     });
-    return { ...v, stock, options };
+    return {
+      ...v,
+      stock,
+      options,
+      images: sortedVariantMedia.map((media: Record<string, string>) => media.media_url).filter(Boolean),
+    };
   });
   const defaultVariant = variants.find((v: any) => v.stock > 0) || variants[0] || {};
   const sortedMedia = (d.product_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
+  const effectiveImages = defaultVariant.images?.length ? defaultVariant.images : sortedMedia.map((m: Record<string, string>) => m.media_url);
+  const primaryImage = effectiveImages[0] || sortedMedia[0]?.media_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
   const stock = defaultVariant.stock || 0;
   
   return {
@@ -222,8 +240,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     features: d.features,
     price: defaultVariant.price || 0,
     original_price: defaultVariant.compare_at_price || undefined,
-    image: sortedMedia[0]?.media_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-    images: sortedMedia.map((m: Record<string, string>) => m.media_url),
+    image: primaryImage,
+    images: effectiveImages,
     stock,
     allow_preorder: defaultVariant.allow_preorder || false,
     is_free_delivery: d.is_free_delivery,
@@ -266,6 +284,7 @@ export async function getProductsByCategory(categorySlug: string): Promise<{ pro
         compare_at_price,
         allow_preorder,
         inventory_items ( location_id, available_quantity ),
+        variant_media ( media_url, position ),
         variant_option_values (
           option_value_id,
           product_option_values ( value, option_id, product_options ( name ) )
@@ -295,6 +314,7 @@ export async function getProductsByCategory(categorySlug: string): Promise<{ pro
 
   const products = data.map((p: Record<string, any>) => {
     const variants = (p.product_variants || []).map((v: any) => {
+      const sortedVariantMedia = (v.variant_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
       const stock = (v.inventory_items || []).reduce(
         (sum: number, row: any) => sum + (row?.available_quantity || 0),
         0
@@ -305,10 +325,17 @@ export async function getProductsByCategory(categorySlug: string): Promise<{ pro
         const optVal = ov.product_option_values?.value;
         if (optName && optVal) options[optName] = optVal;
       });
-      return { ...v, stock, options };
+      return {
+        ...v,
+        stock,
+        options,
+        images: sortedVariantMedia.map((media: Record<string, string>) => media.media_url).filter(Boolean),
+      };
     });
     const defaultVariant = variants.find((v: any) => v.stock > 0) || variants[0] || {};
     const sortedMedia = (p.product_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
+    const effectiveImages = defaultVariant.images?.length ? defaultVariant.images : sortedMedia.map((m: Record<string, string>) => m.media_url);
+    const primaryImage = effectiveImages[0] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
     const stock = defaultVariant.stock || 0;
     return {
       id: p.id,
@@ -316,8 +343,8 @@ export async function getProductsByCategory(categorySlug: string): Promise<{ pro
       slug: p.slug,
       price: defaultVariant.price || 0,
       original_price: defaultVariant.compare_at_price || undefined,
-      image: sortedMedia[0]?.media_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-      images: sortedMedia.map((m: Record<string, string>) => m.media_url),
+      image: primaryImage,
+      images: effectiveImages,
       stock,
       allow_preorder: defaultVariant.allow_preorder || false,
       is_free_delivery: p.is_free_delivery,

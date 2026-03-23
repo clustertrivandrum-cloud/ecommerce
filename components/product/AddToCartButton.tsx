@@ -17,6 +17,7 @@ interface AddToCartButtonProps {
   selectedVariantStock?: number | null;
   selectedVariantAllowPreorder?: boolean | null;
   selectedVariantLabel?: string | null;
+  selectedVariantImage?: string | null;
 }
 
 export function AddToCartButton({
@@ -28,6 +29,7 @@ export function AddToCartButton({
   selectedVariantStock,
   selectedVariantAllowPreorder,
   selectedVariantLabel,
+  selectedVariantImage,
 }: AddToCartButtonProps) {
   const { user } = useUserStore();
   const [isAdding, setIsAdding] = useState(false);
@@ -42,6 +44,7 @@ export function AddToCartButton({
   const effectivePrice = selectedVariantPrice ?? product.price;
   const allowPreorder = selectedVariantAllowPreorder ?? product.allow_preorder;
   const effectiveVariantId = selectedVariantId || product.variantId || null;
+  const effectiveImage = selectedVariantImage || product.image;
 
   const isSoldOut = effectiveStock === 0 && !allowPreorder;
   const isPreorder = effectiveStock === 0 && allowPreorder;
@@ -62,7 +65,7 @@ export function AddToCartButton({
         slug: product.slug,
         name: product.name,
         price: effectivePrice,
-        image: product.image,
+        image: effectiveImage,
         quantity,
         stock: effectiveStock ?? undefined,
         variantId: selectedVariantId || product.variantId || undefined,
@@ -154,8 +157,8 @@ export function AddToCartButton({
         product={{
           id: product.id,
           name: product.name,
-          image: product.image,
-          price: product.price
+          image: effectiveImage,
+          price: effectivePrice
         }}
         onConfirm={handlePreorderConfirm}
         error={preorderError}

@@ -18,6 +18,7 @@ interface ProductActionsProps {
     stock?: number;
     allowPreorder?: boolean;
     label?: string;
+    image?: string;
   } | null;
 }
 
@@ -145,6 +146,7 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
           selectedVariantStock={effectiveStock}
           selectedVariantAllowPreorder={selectedVariant?.allowPreorder}
           selectedVariantLabel={selectedVariant?.label}
+          selectedVariantImage={selectedVariant?.image}
         />
         <button
           type="button"
@@ -172,10 +174,11 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
                quantity={quantity}
                selectedVariantId={effectiveVariantId}
                selectedVariantPrice={effectivePrice}
-               selectedVariantStock={effectiveStock}
-               selectedVariantAllowPreorder={selectedVariant?.allowPreorder}
-               selectedVariantLabel={selectedVariant?.label}
-             />
+	             selectedVariantStock={effectiveStock}
+	             selectedVariantAllowPreorder={selectedVariant?.allowPreorder}
+	             selectedVariantLabel={selectedVariant?.label}
+               selectedVariantImage={selectedVariant?.image}
+	             />
           </div>
         </div>
       )}

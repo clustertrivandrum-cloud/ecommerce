@@ -14,6 +14,7 @@ type WishlistVariantRow = {
   compare_at_price?: number | null;
   allow_preorder?: boolean | null;
   inventory_items?: Array<{ available_quantity: number | null }> | null;
+  variant_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
 };
 
 type WishlistProductRow = {
@@ -81,7 +82,8 @@ export default function WishlistPage() {
               price,
               compare_at_price,
               allow_preorder,
-              inventory_items ( location_id, available_quantity )
+              inventory_items ( location_id, available_quantity ),
+              variant_media ( media_url, position )
             ),
             product_media ( media_url )
           )
@@ -98,15 +100,20 @@ export default function WishlistPage() {
             }
 
             const variants = (p.product_variants || []).map((v) => {
+              const sortedVariantMedia = (v.variant_media || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0));
               const stock = (v.inventory_items || []).reduce(
                 (sum: number, row) => sum + (row?.available_quantity || 0),
                 0
               );
 
-              return { ...v, stock };
+              return {
+                ...v,
+                stock,
+                images: sortedVariantMedia.map((media) => media.media_url).filter((value): value is string => Boolean(value)),
+              };
             });
             const defaultVariant = variants.find((v) => v.stock > 0) || variants[0] || {};
-            const defaultMedia = p.product_media?.[0] || {};
+            const defaultMedia = defaultVariant.images?.[0] || p.product_media?.[0]?.media_url;
 
             return [{
               id: p.id,
@@ -114,7 +121,7 @@ export default function WishlistPage() {
               slug: p.slug,
               price: defaultVariant.price || 0,
               original_price: defaultVariant.compare_at_price || undefined,
-              image: defaultMedia.media_url || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
+              image: defaultMedia || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
               stock: defaultVariant.stock || 0,
               allow_preorder: defaultVariant.allow_preorder || false,
               is_free_delivery: p.is_free_delivery ?? undefined,
