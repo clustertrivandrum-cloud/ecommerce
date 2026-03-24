@@ -8,7 +8,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { NoticeBanner } from '@/components/ui/NoticeBanner';
 
-type OrderItem = { title: string; quantity: number; unit_price: number; total_price: number };
+type OrderItem = {
+  title: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  variant_title?: string | null;
+};
 type Order = {
   id: string;
   order_number: string;
@@ -116,7 +122,7 @@ function OrdersPageContent() {
           fulfillment_status,
           grand_total,
           created_at,
-          order_items ( title, quantity, unit_price, total_price )
+          order_items ( title, variant_title, quantity, unit_price, total_price )
         `)
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
@@ -326,10 +332,11 @@ function OrdersPageContent() {
               </div>
               
               <div className="space-y-4">
-                {order.order_items?.map((item: { title: string; quantity: number; unit_price: number }, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center text-sm">
+                {order.order_items?.map((item: OrderItem, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center gap-4 text-sm">
                     <span className="text-text-secondary">
                       {item.quantity}x {item.title}
+                      {item.variant_title && item.variant_title !== 'Default Variant' ? ` • ${item.variant_title}` : ''}
                     </span>
                     <span>₹{item.unit_price?.toFixed(2)}</span>
                   </div>

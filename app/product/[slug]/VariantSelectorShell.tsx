@@ -108,7 +108,10 @@ export default function VariantSelectorShell({
       : [product.image];
   const activeImage = images[activeImageIndex] || images[0];
   const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
-  const selectedVariantLabel = formatVariantLabel(selectedVariant?.options);
+  const selectedVariantLabel =
+    selectedVariant?.title && selectedVariant.title !== 'Default Variant'
+      ? selectedVariant.title
+      : formatVariantLabel(selectedVariant?.options);
 
   useEffect(() => {
     setActiveImageIndex(0);

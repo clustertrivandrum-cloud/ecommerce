@@ -6,6 +6,7 @@ import { validateCoupon, incrementCouponUse } from '@/lib/server/coupons';
 import { sendOrderInvoiceEmail } from '@/lib/server/order-email';
 import { calculateShippingCharge } from '@/lib/shipping';
 import { getShippingSettings } from '@/lib/server/app-settings';
+import { buildVariantOptionLabel } from '@/lib/api/sellable-variants';
 
 const PAYMENT_REQUEST_TTL_HOURS = Number(process.env.PAYMENT_REQUEST_TTL_HOURS || 24);
 
@@ -74,8 +75,34 @@ export async function calculateGrandTotal(data: CheckoutData, subtotal: number, 
 
 type VariantRow = {
   id: string;
+  sku?: string | null;
+  title?: string | null;
   price: number | null;
-  inventory_items: Array<{ available_quantity: number | null }> | null;
+  allow_preorder?: boolean | null;
+  sellable_status?: string | null;
+  inventory_items: Array<{ available_quantity: number | null; reserved_quantity?: number | null; location_id?: string | null }> | null;
+  products?: {
+    title?: string | null;
+    slug?: string | null;
+    status?: string | null;
+    product_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
+  } | null;
+  variant_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
+  variant_option_values?: Array<{
+    product_option_values?: {
+      value?: string | null;
+      position?: number | null;
+      product_options?: {
+        name?: string | null;
+        position?: number | null;
+      } | null;
+    } | null;
+  }> | null;
+};
+
+type SnapshotOption = {
+  name: string;
+  value: string;
 };
 
 function normalizeEmail(value: string | null | undefined) {
@@ -159,7 +186,24 @@ async function fetchVariantPricingAndStock(items: CartItemInput[]) {
 
   const { data, error } = await supabaseAdmin
     .from('product_variants')
-    .select('id, price, inventory_items(available_quantity)')
+    .select(`
+      id,
+      sku,
+      title,
+      price,
+      allow_preorder,
+      sellable_status,
+      inventory_items(available_quantity, reserved_quantity, location_id),
+      products(title, slug, status, product_media(media_url, position)),
+      variant_media(media_url, position),
+      variant_option_values(
+        product_option_values(
+          value,
+          position,
+          product_options(name, position)
+        )
+      )
+    `)
     .in('id', variantIds);
 
   if (error) {
@@ -169,6 +213,65 @@ async function fetchVariantPricingAndStock(items: CartItemInput[]) {
   const byId = new Map<string, VariantRow>();
   (data as VariantRow[] | null || []).forEach((row) => byId.set(row.id, row));
   return byId;
+}
+
+function getSnapshotOptions(variant: VariantRow): SnapshotOption[] {
+  return (variant.variant_option_values || [])
+    .map((entry) => {
+      const option = entry.product_option_values?.product_options;
+      const value = entry.product_option_values?.value;
+
+      if (!option?.name || !value) {
+        return null;
+      }
+
+      return {
+        name: option.name,
+        value,
+        optionPosition: option.position || 0,
+        valuePosition: entry.product_option_values?.position || 0,
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => {
+      const a = left as SnapshotOption & { optionPosition: number; valuePosition: number };
+      const b = right as SnapshotOption & { optionPosition: number; valuePosition: number };
+
+      if (a.optionPosition !== b.optionPosition) {
+        return a.optionPosition - b.optionPosition;
+      }
+
+      if (a.valuePosition !== b.valuePosition) {
+        return a.valuePosition - b.valuePosition;
+      }
+
+      return a.name.localeCompare(b.name) || a.value.localeCompare(b.value);
+    })
+    .map((entry) => ({ name: (entry as SnapshotOption).name, value: (entry as SnapshotOption).value }));
+}
+
+function getVariantAvailableStock(variant: VariantRow) {
+  return (variant.inventory_items || []).reduce((sum, item) => {
+    const available = Number(item?.available_quantity || 0);
+    const reserved = Number(item?.reserved_quantity || 0);
+    return sum + Math.max(0, available - reserved);
+  }, 0);
+}
+
+function getVariantSnapshotImage(variant: VariantRow) {
+  const variantImage = (variant.variant_media || [])
+    .slice()
+    .sort((left, right) => Number(left.position || 0) - Number(right.position || 0))
+    .find((media) => media.media_url)?.media_url;
+
+  if (variantImage) {
+    return variantImage;
+  }
+
+  return (variant.products?.product_media || [])
+    .slice()
+    .sort((left, right) => Number(left.position || 0) - Number(right.position || 0))
+    .find((media) => media.media_url)?.media_url || null;
 }
 
 function validateAndPriceItems(items: CartItemInput[], variants: Map<string, VariantRow>) {
@@ -183,7 +286,11 @@ function validateAndPriceItems(items: CartItemInput[], variants: Map<string, Var
       throw new Error(`Variant ${item.variantId} is unavailable.`);
     }
 
-    const available = variant.inventory_items?.[0]?.available_quantity ?? 0;
+    if ((variant.sellable_status || 'draft') !== 'sellable') {
+      throw new Error(`Variant ${item.variantId} is not sellable.`);
+    }
+
+    const available = getVariantAvailableStock(variant);
     if (available < item.quantity) {
       throw new Error(`Insufficient stock for ${item.name || 'item'}.`);
     }
@@ -191,12 +298,18 @@ function validateAndPriceItems(items: CartItemInput[], variants: Map<string, Var
     const unitPrice = Number(variant.price ?? 0);
     const lineTotal = unitPrice * item.quantity;
     subtotal += lineTotal;
+    const snapshotOptions = getSnapshotOptions(variant);
+    const variantLabel = variant.title || buildVariantOptionLabel(Object.fromEntries(snapshotOptions.map((option) => [option.name, option.value])));
 
     return {
       order_id: '', // filled later
       variant_id: item.variantId,
-      title: item.name,
-      sku: item.id,
+      title: variant.products?.title || item.name || 'Order item',
+      sku: variant.sku || item.id,
+      product_slug: variant.products?.slug || item.slug || null,
+      image_url: getVariantSnapshotImage(variant),
+      variant_title: variantLabel || 'Default Variant',
+      variant_options: snapshotOptions,
       quantity: item.quantity,
       unit_price: unitPrice,
       total_price: lineTotal,
@@ -204,6 +317,46 @@ function validateAndPriceItems(items: CartItemInput[], variants: Map<string, Var
   });
 
   return { pricedItems, subtotal };
+}
+
+async function reserveVariantQuantities(items: Array<{ variant_id: string; quantity: number }>, reference?: string | null) {
+  const reserved: Array<{ variant_id: string; quantity: number }> = [];
+
+  for (const item of items) {
+    const { data: ok, error } = await supabaseAdmin.rpc('reserve_stock', {
+      p_variant_id: item.variant_id,
+      p_qty: item.quantity,
+      p_reference: reference || null,
+    });
+
+    if (error || ok === false) {
+      for (const prior of reserved.slice().reverse()) {
+        await supabaseAdmin.rpc('release_stock', {
+          p_variant_id: prior.variant_id,
+          p_qty: prior.quantity,
+          p_reference: reference || null,
+        });
+      }
+
+      throw error || new Error('Insufficient stock for one or more items.');
+    }
+
+    reserved.push(item);
+  }
+
+  return reserved;
+}
+
+async function releaseVariantQuantities(items: Array<{ variant_id: string | null; quantity: number }>, reference?: string | null) {
+  for (const item of items) {
+    if (!item.variant_id) continue;
+
+    await supabaseAdmin.rpc('release_stock', {
+      p_variant_id: item.variant_id,
+      p_qty: item.quantity,
+      p_reference: reference || null,
+    });
+  }
 }
 
 export function hasRazorpayCredentials() {
@@ -243,6 +396,9 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
   const fullName = normalizeFullName(
     data.guestName || `${data.address.firstName} ${data.address.lastName}`
   );
+  const reserved = await reserveVariantQuantities(
+    pricedItems.map((item) => ({ variant_id: item.variant_id, quantity: item.quantity }))
+  );
 
   const { data: orderParams, error: orderError } = await supabaseAdmin
     .from('orders')
@@ -272,6 +428,7 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
     .single();
 
   if (orderError || !orderParams) {
+    await releaseVariantQuantities(reserved);
     throw orderError || new Error('Order creation failed.');
   }
 
@@ -290,6 +447,8 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
     });
 
   if (addressError) {
+    await releaseVariantQuantities(reserved, orderId);
+    await supabaseAdmin.from('orders').delete().eq('id', orderId);
     throw addressError;
   }
 
@@ -303,6 +462,8 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
     .insert(orderItems);
 
   if (itemsError) {
+    await releaseVariantQuantities(reserved, orderId);
+    await supabaseAdmin.from('orders').delete().eq('id', orderId);
     throw itemsError;
   }
 
@@ -316,7 +477,7 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
 export async function createRetryPaymentSession(orderId: string) {
   const { data: order, error: orderError } = await supabaseAdmin
     .from('orders')
-    .select('id, grand_total, financial_status')
+    .select('id, grand_total, financial_status, order_items(variant_id, quantity)')
     .eq('id', orderId)
     .single();
 
@@ -335,6 +496,14 @@ export async function createRetryPaymentSession(orderId: string) {
 
   if (!hasRazorpayCredentials()) {
     throw new Error('Razorpay is not configured.');
+  }
+
+  if ((order.financial_status || '').toLowerCase() === 'failed') {
+    await reserveVariantQuantities(
+      ((order.order_items || []) as OrderItemRow[])
+        .filter((item): item is { variant_id: string; quantity: number } => Boolean(item.variant_id && item.quantity > 0)),
+      orderId
+    );
   }
 
   const razorpay = getRazorpay();
@@ -599,7 +768,7 @@ export async function finalizePaidOrder({
   for (const [variantId, quantity] of Object.entries(variantQuantities)) {
     const { data: inventoryItem, error: inventoryError } = await supabaseAdmin
       .from('inventory_items')
-      .select('id, available_quantity, location_id')
+      .select('id, available_quantity, reserved_quantity, location_id')
       .eq('variant_id', variantId)
       .limit(1)
       .single();
@@ -624,7 +793,10 @@ export async function finalizePaidOrder({
 
     const { error: inventoryUpdateError } = await supabaseAdmin
       .from('inventory_items')
-      .update({ available_quantity: Math.max(0, inventoryItem.available_quantity - quantity) })
+      .update({
+        available_quantity: Math.max(0, Number(inventoryItem.available_quantity || 0) - quantity),
+        reserved_quantity: Math.max(0, Number(inventoryItem.reserved_quantity || 0) - quantity),
+      })
       .eq('id', inventoryItem.id);
 
     if (inventoryUpdateError) {
@@ -666,6 +838,34 @@ export async function markOrderPaymentFailed({
     amount,
     status: 'failed',
   });
+
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from('orders')
+    .select('financial_status')
+    .eq('id', orderId)
+    .single();
+
+  if (orderError || !order) {
+    throw orderError || new Error('Order not found.');
+  }
+
+  const financialStatus = (order.financial_status || '').toLowerCase();
+  if (financialStatus === 'paid') {
+    return;
+  }
+
+  if (financialStatus !== 'failed') {
+    const { data: orderItems, error: orderItemsError } = await supabaseAdmin
+      .from('order_items')
+      .select('variant_id, quantity')
+      .eq('order_id', orderId);
+
+    if (orderItemsError) {
+      throw orderItemsError;
+    }
+
+    await releaseVariantQuantities((orderItems || []) as OrderItemRow[], orderId);
+  }
 
   const { error: updateError } = await supabaseAdmin
     .from('orders')

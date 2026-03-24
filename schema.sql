@@ -127,6 +127,81 @@ CREATE TABLE public.inventory_movements (
   CONSTRAINT inventory_movements_variant_id_fkey FOREIGN KEY (variant_id) REFERENCES public.product_variants(id),
   CONSTRAINT inventory_movements_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id)
 );
+CREATE OR REPLACE FUNCTION public.reserve_stock(p_variant_id uuid, p_qty integer, p_reference uuid DEFAULT NULL::uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
+declare
+  inventory_row record;
+begin
+  if p_qty is null or p_qty <= 0 then
+    return true;
+  end if;
+
+  select id, location_id, available_quantity, reserved_quantity
+  into inventory_row
+  from public.inventory_items
+  where variant_id = p_variant_id
+  order by updated_at asc, id asc
+  limit 1
+  for update;
+
+  if inventory_row.id is null then
+    raise exception 'Inventory not found for variant %', p_variant_id;
+  end if;
+
+  if coalesce(inventory_row.available_quantity, 0) - coalesce(inventory_row.reserved_quantity, 0) < p_qty then
+    return false;
+  end if;
+
+  update public.inventory_items
+  set reserved_quantity = coalesce(reserved_quantity, 0) + p_qty,
+      updated_at = now()
+  where id = inventory_row.id;
+
+  insert into public.inventory_movements (variant_id, location_id, quantity, movement_type, reference_id)
+  values (p_variant_id, inventory_row.location_id, -p_qty, 'reservation', p_reference);
+
+  return true;
+end;
+$function$;
+CREATE OR REPLACE FUNCTION public.release_stock(p_variant_id uuid, p_qty integer, p_reference uuid DEFAULT NULL::uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
+declare
+  inventory_row record;
+  release_qty integer;
+begin
+  if p_qty is null or p_qty <= 0 then
+    return true;
+  end if;
+
+  select id, location_id, reserved_quantity
+  into inventory_row
+  from public.inventory_items
+  where variant_id = p_variant_id
+  order by updated_at asc, id asc
+  limit 1
+  for update;
+
+  if inventory_row.id is null then
+    raise exception 'Inventory not found for variant %', p_variant_id;
+  end if;
+
+  release_qty := least(coalesce(inventory_row.reserved_quantity, 0), p_qty);
+
+  update public.inventory_items
+  set reserved_quantity = greatest(coalesce(reserved_quantity, 0) - release_qty, 0),
+      updated_at = now()
+  where id = inventory_row.id;
+
+  insert into public.inventory_movements (variant_id, location_id, quantity, movement_type, reference_id)
+  values (p_variant_id, inventory_row.location_id, release_qty, 'release', p_reference);
+
+  return true;
+end;
+$function$;
 CREATE TABLE public.locations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -153,6 +228,10 @@ CREATE TABLE public.order_items (
   variant_id uuid,
   title text,
   sku text,
+  product_slug text,
+  image_url text,
+  variant_title text,
+  variant_options jsonb DEFAULT '[]'::jsonb,
   quantity integer NOT NULL,
   unit_price numeric NOT NULL,
   total_price numeric NOT NULL,
@@ -239,6 +318,12 @@ CREATE TABLE public.preorders (
   customer_id uuid,
   variant_id uuid,
   order_id uuid,
+  product_title text,
+  product_slug text,
+  image_url text,
+  variant_title text,
+  variant_options jsonb DEFAULT '[]'::jsonb,
+  unit_price numeric,
   quantity integer,
   status text DEFAULT 'pending'::text,
   created_at timestamp with time zone DEFAULT now(),
@@ -289,6 +374,11 @@ CREATE TABLE public.product_tags (
 CREATE TABLE public.product_variants (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   product_id uuid,
+  title text DEFAULT 'Default Variant'::text,
+  option_signature text,
+  sellable_status text DEFAULT 'draft'::text CHECK (sellable_status = ANY (ARRAY['draft'::text, 'sellable'::text, 'hidden'::text, 'archived'::text])),
+  is_default boolean DEFAULT false,
+  variant_rank integer DEFAULT 0,
   sku text NOT NULL DEFAULT generate_sku() UNIQUE,
   barcode text UNIQUE,
   price numeric NOT NULL,

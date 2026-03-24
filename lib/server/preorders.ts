@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { buildVariantOptionLabel } from '@/lib/api/sellable-variants';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,8 +17,17 @@ type VariantOptionValueRow = {
     value?: string | null;
     product_options?: {
       name?: string | null;
-    } | null;
-  } | null;
+    } | Array<{
+      name?: string | null;
+    }> | null;
+  } | Array<{
+    value?: string | null;
+    product_options?: {
+      name?: string | null;
+    } | Array<{
+      name?: string | null;
+    }> | null;
+  }> | null;
 };
 
 type PreorderRow = {
@@ -41,7 +51,14 @@ type PreorderRow = {
         media_url?: string | null;
         position?: number | null;
       }> | null;
-    } | null;
+    } | Array<{
+      title?: string | null;
+      slug?: string | null;
+      product_media?: Array<{
+        media_url?: string | null;
+        position?: number | null;
+      }> | null;
+    }> | null;
     variant_option_values?: Array<{
       product_option_values?: VariantOptionValueRow['product_option_values'];
     }> | null;
@@ -63,18 +80,22 @@ export type CustomerPreorderSummary = {
   orderFinancialStatus: string | null;
 };
 
-function formatVariantLabel(
+function normalizeVariantOptions(
   optionValues?: VariantOptionValueRow[] | null
 ) {
-  const parts = (optionValues || [])
+  return (optionValues || [])
     .map((item) => {
-      const optionName = item?.product_option_values?.product_options?.name;
-      const optionValue = item?.product_option_values?.value;
-      return optionName && optionValue ? `${optionName}: ${optionValue}` : null;
+      const optionValueRow = Array.isArray(item?.product_option_values)
+        ? item?.product_option_values[0]
+        : item?.product_option_values;
+      const optionRow = Array.isArray(optionValueRow?.product_options)
+        ? optionValueRow?.product_options[0]
+        : optionValueRow?.product_options;
+      const optionName = optionRow?.name;
+      const optionValue = optionValueRow?.value;
+      return optionName && optionValue ? { name: optionName, value: optionValue } : null;
     })
-    .filter((value): value is string => Boolean(value));
-
-  return parts.length > 0 ? parts.join(' / ') : null;
+    .filter((value): value is { name: string; value: string } => Boolean(value));
 }
 
 export async function listCustomerPreordersByEmail(email: string): Promise<CustomerPreorderSummary[]> {
@@ -105,6 +126,12 @@ export async function listCustomerPreordersByEmail(email: string): Promise<Custo
       quantity,
       status,
       created_at,
+      product_title,
+      product_slug,
+      image_url,
+      variant_title,
+      variant_options,
+      unit_price,
       order_id,
       orders (
         id,
@@ -135,20 +162,30 @@ export async function listCustomerPreordersByEmail(email: string): Promise<Custo
   }
 
   return ((data || []) as unknown as PreorderRow[]).map((preorder) => {
-    const media = (preorder.product_variants?.products?.product_media || []).slice().sort((a, b) => {
+    const product = Array.isArray(preorder.product_variants?.products)
+      ? preorder.product_variants?.products[0]
+      : preorder.product_variants?.products;
+    const media = (product?.product_media || []).slice().sort((a, b) => {
       return (a.position || 0) - (b.position || 0);
     });
+    const snapshotOptions = Array.isArray((preorder as PreorderRow & { variant_options?: unknown }).variant_options)
+      ? ((preorder as PreorderRow & { variant_options?: Array<{ name?: string; value?: string }> }).variant_options || [])
+          .filter((option): option is { name: string; value: string } => Boolean(option?.name && option?.value))
+      : [];
+    const joinedVariantOptions = normalizeVariantOptions(preorder.product_variants?.variant_option_values);
+    const variantLabel = (preorder as PreorderRow & { variant_title?: string | null }).variant_title
+      || buildVariantOptionLabel(Object.fromEntries((snapshotOptions.length > 0 ? snapshotOptions : joinedVariantOptions).map((option) => [option.name, option.value])));
 
     return {
       id: preorder.id,
       quantity: preorder.quantity || 1,
       status: preorder.status || 'pending',
       createdAt: preorder.created_at,
-      productName: preorder.product_variants?.products?.title || 'Product unavailable',
-      productSlug: preorder.product_variants?.products?.slug || null,
-      productImage: media[0]?.media_url || null,
-      variantLabel: formatVariantLabel(preorder.product_variants?.variant_option_values),
-      unitPrice: preorder.product_variants?.price || null,
+      productName: (preorder as PreorderRow & { product_title?: string | null }).product_title || product?.title || 'Product unavailable',
+      productSlug: (preorder as PreorderRow & { product_slug?: string | null }).product_slug || product?.slug || null,
+      productImage: (preorder as PreorderRow & { image_url?: string | null }).image_url || media[0]?.media_url || null,
+      variantLabel: variantLabel || null,
+      unitPrice: (preorder as PreorderRow & { unit_price?: number | null }).unit_price || preorder.product_variants?.price || null,
       orderId: preorder.order_id || preorder.orders?.id || null,
       orderNumber: preorder.orders?.order_number || null,
       orderFinancialStatus: preorder.orders?.financial_status || null,
@@ -177,7 +214,20 @@ export async function createPreorderReservation({
 
   const { data: variant, error: variantError } = await supabaseAdmin
     .from('product_variants')
-    .select('id, allow_preorder')
+    .select(`
+      id,
+      title,
+      price,
+      allow_preorder,
+      products(title, slug, product_media(media_url, position)),
+      variant_media(media_url, position),
+      variant_option_values(
+        product_option_values(
+          value,
+          product_options(name)
+        )
+      )
+    `)
     .eq('id', variantId)
     .maybeSingle();
 
@@ -192,6 +242,19 @@ export async function createPreorderReservation({
   if (!variant.allow_preorder) {
     throw new Error('This variant is not currently available for preorder.');
   }
+
+  const optionValues = normalizeVariantOptions(variant.variant_option_values);
+  const product = Array.isArray(variant.products) ? variant.products[0] : variant.products;
+  const variantTitle = variant.title || buildVariantOptionLabel(Object.fromEntries(optionValues.map((option) => [option.name, option.value]))) || 'Default Variant';
+  const variantImage = (variant.variant_media || [])
+    .slice()
+    .sort((a, b) => (a.position || 0) - (b.position || 0))
+    .find((media) => media.media_url)?.media_url
+    || (product?.product_media || [])
+      .slice()
+      .sort((a, b) => (a.position || 0) - (b.position || 0))
+      .find((media) => media.media_url)?.media_url
+    || null;
 
   const { data: customer, error: customerError } = await supabaseAdmin
     .from('customers')
@@ -234,6 +297,12 @@ export async function createPreorderReservation({
     .insert({
       customer_id: customer.id,
       variant_id: variantId,
+      product_title: product?.title || null,
+      product_slug: product?.slug || null,
+      image_url: variantImage,
+      variant_title: variantTitle,
+      variant_options: optionValues,
+      unit_price: variant.price || null,
       quantity,
       status: 'pending',
     })

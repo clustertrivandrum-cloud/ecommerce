@@ -7,23 +7,15 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ProductCard } from '@/components/product/ProductCard';
 import type { Product } from '@/lib/api/home';
-
-type WishlistVariantRow = {
-  id: string;
-  price: number | null;
-  compare_at_price?: number | null;
-  allow_preorder?: boolean | null;
-  inventory_items?: Array<{ available_quantity: number | null }> | null;
-  variant_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
-};
+import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from '@/lib/api/sellable-variants';
 
 type WishlistProductRow = {
   id: string;
   title: string;
   slug: string;
   is_free_delivery?: boolean | null;
-  product_variants?: WishlistVariantRow[] | null;
-  product_media?: Array<{ media_url?: string | null }> | null;
+  product_variants?: Array<Record<string, unknown>> | null;
+  product_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
 };
 
 type WishlistItemRow = {
@@ -78,14 +70,9 @@ export default function WishlistPage() {
           products (
             id, title, slug, is_free_delivery,
             product_variants (
-              id,
-              price,
-              compare_at_price,
-              allow_preorder,
-              inventory_items ( location_id, available_quantity ),
-              variant_media ( media_url, position )
+              ${SELLABLE_VARIANT_SELECT}
             ),
-            product_media ( media_url )
+            product_media ( media_url, position )
           )
         `)
         .eq('wishlist_id', wishlist[0].id);
@@ -99,33 +86,11 @@ export default function WishlistPage() {
               return [];
             }
 
-            const variants = (p.product_variants || []).map((v) => {
-              const sortedVariantMedia = (v.variant_media || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0));
-              const stock = (v.inventory_items || []).reduce(
-                (sum: number, row) => sum + (row?.available_quantity || 0),
-                0
-              );
-
-              return {
-                ...v,
-                stock,
-                images: sortedVariantMedia.map((media) => media.media_url).filter((value): value is string => Boolean(value)),
-              };
-            });
-            const defaultVariant = variants.find((v) => v.stock > 0) || variants[0] || {};
-            const defaultMedia = defaultVariant.images?.[0] || p.product_media?.[0]?.media_url;
+            const projected = projectProductRow(p as ProductRowLike);
 
             return [{
-              id: p.id,
-              name: p.title,
-              slug: p.slug,
-              price: defaultVariant.price || 0,
-              original_price: defaultVariant.compare_at_price || undefined,
-              image: defaultMedia || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
-              stock: defaultVariant.stock || 0,
-              allow_preorder: defaultVariant.allow_preorder || false,
-              is_free_delivery: p.is_free_delivery ?? undefined,
-              variantId: defaultVariant.id
+              ...projected,
+              image: projected.image || 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
             }];
           });
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '../supabase';
+import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
 const CATEGORY_BASE_SELECT = 'id, name, slug, image_url, parent_id';
 const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
@@ -84,6 +85,8 @@ export interface Product {
   variantId?: string;
   variants?: {
     id: string;
+    title?: string;
+    option_signature?: string | null;
     price: number;
     compare_at_price?: number;
     allow_preorder?: boolean;
@@ -169,16 +172,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       review_count,
       brand,
       product_variants (
-        id,
-        price,
-        compare_at_price,
-        allow_preorder,
-        inventory_items ( location_id, available_quantity ),
-        variant_media ( media_url, position ),
-        variant_option_values (
-          option_value_id,
-          product_option_values ( value, option_id, product_options ( name ) )
-        )
+        ${SELLABLE_VARIANT_SELECT}
       ),
       product_media ( media_url, position )
     `)
@@ -188,51 +182,8 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
   if (error || !data) return [];
 
-  return data.map((p: Record<string, any>) => {
-    const variants = (p.product_variants || []).map((v: any) => {
-      const sortedVariantMedia = (v.variant_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
-      const stock = (v.inventory_items || []).reduce(
-        (sum: number, row: any) => sum + (row?.available_quantity || 0),
-        0
-      );
-      const options: Record<string, string> = {};
-      (v.variant_option_values || []).forEach((ov: any) => {
-        const optName = ov.product_option_values?.product_options?.name;
-        const optVal = ov.product_option_values?.value;
-        if (optName && optVal) options[optName] = optVal;
-      });
-      return {
-        ...v,
-        stock,
-        options,
-        images: sortedVariantMedia.map((media: Record<string, string>) => media.media_url).filter(Boolean),
-      };
-    });
-    const defaultVariant = variants.find((v: any) => v.stock > 0) || variants[0] || {};
-    const sortedMedia = (p.product_media || []).sort((a: Record<string, number>, b: Record<string, number>) => a.position - b.position);
-    const effectiveImages = defaultVariant.images?.length ? defaultVariant.images : sortedMedia.map((m: Record<string, string>) => m.media_url);
-    const primaryImage = effectiveImages[0] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
-    const stock = defaultVariant.stock || 0;
-    
-    return {
-      id: p.id,
-      name: p.title,
-      slug: p.slug,
-      price: defaultVariant.price || 0,
-      original_price: defaultVariant.compare_at_price || undefined,
-      image: primaryImage,
-      images: effectiveImages,
-      is_bestseller: true,
-      stock,
-      allow_preorder: defaultVariant.allow_preorder || false,
-      is_free_delivery: p.is_free_delivery,
-      description: p.description,
-      material: p.material,
-      rating: p.rating,
-      review_count: p.review_count,
-      brand: p.brand,
-      variantId: defaultVariant.id,
-      variants,
-    };
-  });
+  return data.map((p: Record<string, any>) => ({
+    ...projectProductRow(p as ProductRowLike),
+    is_bestseller: true,
+  }));
 }
