@@ -1,3 +1,16 @@
+export const DEFAULT_SITE_URL = 'https://www.clusterfascination.com';
+
+function normalizeSiteUrl(siteUrl: string) {
+  const candidate = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
+  const url = new URL(candidate);
+
+  if (url.hostname === 'clusterfascination.com') {
+    url.hostname = 'www.clusterfascination.com';
+  }
+
+  return url.origin;
+}
+
 export function getSiteUrl(request?: Request) {
   const configuredSiteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -6,14 +19,12 @@ export function getSiteUrl(request?: Request) {
     null;
 
   if (configuredSiteUrl) {
-    return configuredSiteUrl.startsWith('http')
-      ? configuredSiteUrl
-      : `https://${configuredSiteUrl}`;
+    return normalizeSiteUrl(configuredSiteUrl);
   }
 
   const vercelUrl = process.env.VERCEL_URL;
   if (vercelUrl) {
-    return `https://${vercelUrl}`;
+    return normalizeSiteUrl(vercelUrl);
   }
 
   if (!request) return null;
@@ -22,7 +33,7 @@ export function getSiteUrl(request?: Request) {
   const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
   if (!forwardedHost) return null;
 
-  return `${forwardedProto}://${forwardedHost}`;
+  return normalizeSiteUrl(`${forwardedProto}://${forwardedHost}`);
 }
 
 export function getRazorpayWebhookUrl(request?: Request) {

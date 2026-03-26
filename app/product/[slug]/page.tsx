@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getProductBySlug } from "@/lib/api/product";
-import { getSiteUrl } from "@/lib/server/site-url";
+import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/server/site-url";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Product } from "@/lib/api/home";
@@ -36,7 +36,6 @@ export async function generateMetadata({
 
   const title = `${product.name} | Cluster Fascination`;
   const description = getProductDescription(product);
-  const siteUrl = getSiteUrl();
   const primaryImage = product.images?.[0] || product.image;
 
   return {
@@ -75,7 +74,7 @@ export default async function ProductPage({
     notFound();
   }
 
-  const siteUrl = getSiteUrl() || 'https://clusterfascination.com';
+  const siteUrl = getSiteUrl() || DEFAULT_SITE_URL;
   const primaryImage = product.images?.[0] || product.image;
   const productJsonLd = {
     '@context': 'https://schema.org',

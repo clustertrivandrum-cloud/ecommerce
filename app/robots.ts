@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
-import { getSiteUrl } from '@/lib/server/site-url';
+import { DEFAULT_SITE_URL, getSiteUrl } from '@/lib/server/site-url';
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = getSiteUrl() || 'https://clusterfascination.com';
+  const siteUrl = getSiteUrl() || DEFAULT_SITE_URL;
   return {
     rules: [
       {

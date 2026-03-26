@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
-import { getSiteUrl } from '@/lib/server/site-url';
-import { getProducts, getProductBySlug } from '@/lib/api/product';
+import { DEFAULT_SITE_URL, getSiteUrl } from '@/lib/server/site-url';
+import { getProducts } from '@/lib/api/product';
 import { getCategories } from '@/lib/api/home';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = getSiteUrl() || 'https://clusterfascination.com';
+  const siteUrl = getSiteUrl() || DEFAULT_SITE_URL;
 
   // Static pages
   const staticRoutes: MetadataRoute.Sitemap = [

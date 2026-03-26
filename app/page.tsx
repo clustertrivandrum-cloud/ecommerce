@@ -24,8 +24,9 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { getHomeBannerSettings } from "@/lib/server/app-settings";
 import { AnnouncementBar } from "@/components/home/AnnouncementBar";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
+import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/server/site-url";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://clusterfascination.com';
+const SITE_URL = getSiteUrl() || DEFAULT_SITE_URL;
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',

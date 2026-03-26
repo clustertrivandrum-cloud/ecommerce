@@ -8,13 +8,14 @@ import { AuthSessionSync } from "@/components/providers/AuthSessionSync";
 import { AnalyticsConsent } from "@/components/providers/AnalyticsConsent";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthModal } from "@/components/modals/AuthModal";
+import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/server/site-url";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://clusterfascination.com';
+const SITE_URL = getSiteUrl() || DEFAULT_SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
