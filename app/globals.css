@@ -22,7 +22,7 @@
     --text-primary: #ededed;
     --text-secondary: #a1a1a1;
     --accent-gold: #557f5f;
-    --accent-mint: #a8d5c2;
+    --accent-mint: #2d6a4f;
     --hero-accent: #6d9875;
     --border-color: #262626;
     --overlay-control-bg: rgb(8 8 8 / 0.34);
@@ -39,7 +39,7 @@
     --notice-error-text: #fecaca;
     --notice-success-bg: rgb(16 185 129 / 0.12);
     --notice-success-border: rgb(110 231 183 / 0.3);
-    --notice-success-text: #a8d5c2;
+    --notice-success-text: #5aad8a;
     --notice-info-bg: rgb(47 90 55 / 0.16);
     --notice-info-border: rgb(85 127 95 / 0.34);
     --notice-info-text: #a9c9af;
@@ -55,7 +55,7 @@
     --text-primary: #141816;
     --text-secondary: #4f5d58;
     --accent-gold: #2f5a37;
-    --accent-mint: #7fc3b1;
+    --accent-mint: #1e5c41;
     --hero-accent: #5f8d67;
     --border-color: #bccdc6;
     --overlay-control-bg: rgb(255 255 255 / 0.9);
@@ -181,4 +181,31 @@
   border-color: var(--notice-info-border);
   background-color: var(--notice-info-bg);
   color: var(--notice-info-text);
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@layer components {
+  .marquee-track {
+    animation: marquee-scroll 30s linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-strip:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+    }
+  }
 }

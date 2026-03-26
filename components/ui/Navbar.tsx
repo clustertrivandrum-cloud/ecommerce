@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, Menu, Search, User, X, ChevronRight, Package, LogOut } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { cn } from '@/lib/utils';
 import { SearchModal } from './SearchModal';
 import { CartDrawer } from './CartDrawer';
@@ -13,6 +13,17 @@ import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
+import { MarqueeStrip } from './MarqueeStrip';
+
+function subscribeToCartHydration(callback: () => void) {
+  const unsubscribeHydrate = useCartStore.persist.onHydrate(callback);
+  const unsubscribeFinishHydration = useCartStore.persist.onFinishHydration(callback);
+
+  return () => {
+    unsubscribeHydrate();
+    unsubscribeFinishHydration();
+  };
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -26,6 +37,12 @@ export function Navbar() {
   const cartItemsCount = useCartStore((state) => 
     state.items.reduce((acc, item) => acc + item.quantity, 0)
   );
+  const cartHydrated = useSyncExternalStore(
+    subscribeToCartHydration,
+    () => useCartStore.persist.hasHydrated(),
+    () => false
+  );
+  const visibleCartItemsCount = cartHydrated ? cartItemsCount : 0;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -182,14 +199,15 @@ export function Navbar() {
               className="relative hover:text-accent-gold transition-colors"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartItemsCount > 0 && (
+              {visibleCartItemsCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-text-primary text-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {cartItemsCount}
+                  {visibleCartItemsCount}
                 </span>
               )}
             </button>
           </div>
         </div>
+        <MarqueeStrip />
       </header>
 
       <div
@@ -324,7 +342,7 @@ export function Navbar() {
                   Cart
                 </span>
                 <span className="rounded-full bg-text-primary px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  {cartItemsCount}
+                  {visibleCartItemsCount}
                 </span>
               </button>
             </nav>

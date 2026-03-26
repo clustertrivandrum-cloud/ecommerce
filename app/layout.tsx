@@ -97,7 +97,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthSessionSync />
           <Navbar />
-          <div className="flex-1 pt-[88px] md:pt-[112px]">{children}</div>
+          <div className="flex-1 pt-[124px] md:pt-[148px]">{children}</div>
           <Footer />
           <Suspense fallback={null}>
             <AuthModal />
