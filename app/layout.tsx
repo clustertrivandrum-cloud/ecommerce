@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
@@ -36,7 +37,9 @@ export default function RootLayout({
           <Navbar />
           <div className="flex-1 pt-[88px] md:pt-[112px]">{children}</div>
           <Footer />
-          <AuthModal />
+          <Suspense fallback={null}>
+            <AuthModal />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>
