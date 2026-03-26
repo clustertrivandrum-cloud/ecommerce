@@ -385,7 +385,7 @@ export default function VariantSelectorShell({
           <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-y border-border">
             <div className="flex flex-col items-center gap-1 text-center">
               <Truck className="w-4 h-4 text-accent-gold" />
-              <span className="text-[10px] text-text-secondary uppercase tracking-widest">Free Delivery</span>
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest">Fast Delivery</span>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
               <Package className="w-4 h-4 text-accent-gold" />

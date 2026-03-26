@@ -21,23 +21,14 @@ interface FilterModalProps {
 
 export function FilterModal({ isOpen, onClose, onApply, categories }: FilterModalProps) {
   const [priceRange, setPriceRange] = useState<string>('all');
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
 
   if (!isOpen) return null;
 
   const handleApply = () => {
-    onApply({ priceRange, sizes: selectedSizes, categoryId: selectedCategory, subcategoryId: selectedSubcategory });
+    onApply({ priceRange, sizes: [], categoryId: selectedCategory, subcategoryId: selectedSubcategory });
     onClose();
-  };
-
-  const toggleSize = (size: string) => {
-    if (selectedSizes.includes(size)) {
-      setSelectedSizes(selectedSizes.filter(s => s !== size));
-    } else {
-      setSelectedSizes([...selectedSizes, size]);
-    }
   };
 
   return (
@@ -112,32 +103,12 @@ export function FilterModal({ isOpen, onClose, onApply, categories }: FilterModa
             </div>
           </div>
 
-          {/* Size Filter */}
-          <div className="space-y-4">
-            <h3 className="font-heading tracking-widest uppercase text-text-secondary">Size</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {['XS', 'S', 'M', 'L', 'XL'].map(size => (
-                <button
-                  key={size}
-                  onClick={() => toggleSize(size)}
-                  className={`py-2 border text-center transition-colors ${
-                    selectedSizes.includes(size)
-                      ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
-                      : 'border-border hover:border-text-secondary'
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="p-6 border-t border-border flex gap-4">
           <button
             onClick={() => { 
               setPriceRange('all'); 
-              setSelectedSizes([]); 
               setSelectedCategory('');
               setSelectedSubcategory('');
             }}

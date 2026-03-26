@@ -228,8 +228,8 @@ export function Navbar() {
       >
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div>
-            <span className="block text-[11px] uppercase tracking-[0.3em] text-accent-gold">Cluster</span>
-            <span className="mt-2 block text-lg font-heading tracking-[0.18em] text-text-primary">Navigation</span>
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-gold">Cluster</span>
+            <span className="mt-2 block text-xl font-heading font-semibold tracking-[0.18em] text-text-primary">Navigation</span>
           </div>
           <button
             type="button"
@@ -243,10 +243,10 @@ export function Navbar() {
 
         <div className="mt-5 space-y-6 overflow-y-auto pb-6 h-[calc(100vh-104px)]">
           <section className="rounded-[1.5rem] border border-border bg-card/60 p-4">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-text-secondary">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-text-primary/75">
               {user ? 'Signed in' : 'Guest'}
             </p>
-            <p className="mt-2 text-lg font-heading text-text-primary">
+            <p className="mt-2 text-lg font-heading font-semibold text-text-primary">
               {user?.email ?? 'Browse the collection'}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -254,7 +254,7 @@ export function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
+                  className="rounded-full border border-border px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
                 >
                   My Account
                 </Link>
@@ -265,7 +265,7 @@ export function Navbar() {
                     setMobileMenuOpen(false);
                     setAuthModalOpen(true);
                   }}
-                  className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
+                  className="rounded-full border border-border px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
                 >
                   Sign In
                 </button>
@@ -273,7 +273,7 @@ export function Navbar() {
               <Link
                 href="/wishlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
+                className="rounded-full border border-border px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
               >
                 Wishlist
               </Link>
@@ -283,15 +283,15 @@ export function Navbar() {
           <section className="rounded-[1.5rem] border border-border bg-card/60 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] text-text-secondary">Appearance</p>
-                <p className="mt-2 text-sm text-text-primary">Switch between dark and logo-inspired light mode.</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-text-primary/75">Appearance</p>
+                <p className="mt-2 text-sm font-medium text-text-primary">Switch between dark and light mode.</p>
               </div>
               <ThemeToggle />
             </div>
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] uppercase tracking-[0.28em] text-text-secondary">Quick links</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-text-primary/75">Quick links</p>
             <nav className="space-y-2">
               {[
                 { href: '/products', label: 'Shop All' },
@@ -307,7 +307,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center justify-between rounded-2xl border border-border bg-card/40 px-4 py-3 transition-colors hover:border-accent-gold hover:text-accent-gold"
                   >
-                    <span className="flex items-center gap-3 text-sm tracking-wide">
+                    <span className="flex items-center gap-3 text-[15px] font-semibold tracking-[0.02em] text-text-primary">
                       {Icon ? <Icon className="h-4 w-4" /> : null}
                       {item.label}
                     </span>
@@ -323,7 +323,7 @@ export function Navbar() {
                 }}
                 className="flex w-full items-center justify-between rounded-2xl border border-border bg-card/40 px-4 py-3 text-left transition-colors hover:border-accent-gold hover:text-accent-gold"
               >
-                <span className="flex items-center gap-3 text-sm tracking-wide">
+                <span className="flex items-center gap-3 text-[15px] font-semibold tracking-[0.02em] text-text-primary">
                   <Search className="h-4 w-4" />
                   Search
                 </span>
@@ -337,7 +337,7 @@ export function Navbar() {
                 }}
                 className="flex w-full items-center justify-between rounded-2xl border border-border bg-card/40 px-4 py-3 text-left transition-colors hover:border-accent-gold hover:text-accent-gold"
               >
-                <span className="flex items-center gap-3 text-sm tracking-wide">
+                <span className="flex items-center gap-3 text-[15px] font-semibold tracking-[0.02em] text-text-primary">
                   <ShoppingCart className="h-4 w-4" />
                   Cart
                 </span>
@@ -350,8 +350,8 @@ export function Navbar() {
 
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-text-secondary">Collections</p>
-              <Link href="/category" onClick={() => setMobileMenuOpen(false)} className="text-[11px] uppercase tracking-[0.22em] text-accent-gold">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-text-primary/75">Collections</p>
+              <Link href="/category" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent-gold">
                 View all
               </Link>
             </div>
@@ -368,7 +368,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 transition-colors hover:border-accent-gold hover:text-accent-gold"
                   >
-                    <span className="truncate pr-4 text-sm">{category.bannerTitle || category.name}</span>
+                    <span className="truncate pr-4 text-[15px] font-semibold text-text-primary">{category.bannerTitle || category.name}</span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-text-secondary" />
                   </Link>
                 ))
