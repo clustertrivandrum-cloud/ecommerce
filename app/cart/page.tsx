@@ -139,7 +139,6 @@ export default function CartPage() {
               </Link>
               
               <p className="text-text-secondary text-xs mt-6 leading-relaxed flex items-center gap-2 justify-center">
-                Free returns & exchanges within 30 days.
               </p>
             </div>
           </div>
