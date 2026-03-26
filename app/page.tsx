@@ -1,10 +1,62 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Cluster Fascination — Fashion Jewellery & Accessories',
+  },
+  description:
+    'Discover handpicked fashion jewellery & accessories at Cluster Fascination. Timeless classics and statement pieces for men and women — shipped Pan-India.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Cluster Fascination — Fashion Jewellery & Accessories',
+    description:
+      'Discover handpicked fashion jewellery & accessories. Timeless classics and statement pieces — shipped Pan-India.',
+    url: '/',
+  },
+};
 import Image from "next/image";
 import { getCategories, getFeaturedProducts } from "@/lib/api/home";
 import { ProductCard } from "@/components/product/ProductCard";
 import { getHomeBannerSettings } from "@/lib/server/app-settings";
 import { AnnouncementBar } from "@/components/home/AnnouncementBar";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://clusterfascination.com';
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Cluster Fascination',
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.svg`,
+  sameAs: [
+    'https://www.instagram.com/clusterfascination',
+    'https://chat.whatsapp.com/CNiGdxAEIAh3VxRXFo6Yyc',
+  ],
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      availableLanguage: ['English', 'Malayalam'],
+    },
+  ],
+};
+
+const webSiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Cluster Fascination',
+  url: SITE_URL,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/products?search={search_term_string}` },
+    'query-input': 'required name=search_term_string',
+  },
+};
 
 export default async function Home() {
   const [categories, featuredProducts, homeBanner] = await Promise.all([
@@ -14,6 +66,9 @@ export default async function Home() {
   ]);
 
   return (
+    <>
+      <Script id="org-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+      <Script id="website-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }} />
     <main className="flex-1 space-y-24 pb-24">
       {homeBanner.announcement.enabled ? (
         <AnnouncementBar
@@ -145,5 +200,6 @@ export default async function Home() {
         </div>
       </section>
     </main>
+    </>
   );
 }

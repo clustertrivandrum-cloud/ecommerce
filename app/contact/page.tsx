@@ -3,8 +3,17 @@ import Link from 'next/link';
 import { Instagram, MapPin, Mail, Clock } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Cluster Fascination',
-  description: 'Get in touch with the Cluster Fascination team via WhatsApp, Instagram, or visit our location.',
+  title: 'Contact Us',
+  description: 'Get in touch with the Cluster Fascination team via WhatsApp, Instagram, or visit our location in Kazhakkoottam, Thiruvananthapuram.',
+  alternates: {
+    canonical: '/contact',
+  },
+  openGraph: {
+    title: 'Contact Us | Cluster Fascination',
+    description: 'Get in touch with the Cluster Fascination team via WhatsApp, Instagram, or visit our location.',
+    url: '/contact',
+    type: 'website',
+  },
 };
 
 export default function ContactPage() {

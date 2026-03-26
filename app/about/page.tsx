@@ -3,8 +3,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'About Us | Cluster Fascination',
-  description: 'Driven by passion and creativity, Cluster Fascination brings you timeless classics and statement jewellery pieces.',
+  title: 'About Us',
+  description: 'Driven by passion and creativity, Cluster Fascination brings you timeless classics and statement jewellery pieces. Founded in 2024 by Arya Suresh S, Thiruvananthapuram.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Us | Cluster Fascination',
+    description: 'Driven by passion and creativity, Cluster Fascination brings you timeless classics and statement jewellery pieces.',
+    url: '/about',
+    type: 'website',
+  },
 };
 
 export default function AboutPage() {

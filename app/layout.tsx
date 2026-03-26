@@ -13,9 +13,63 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://clusterfascination.com';
+
 export const metadata: Metadata = {
-  title: "Cluster Fascination",
-  description: "Premium mobile-first e-commerce experience",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Cluster Fascination',
+    template: '%s | Cluster Fascination',
+  },
+  description:
+    'Discover handpicked fashion jewellery & accessories at Cluster Fascination. Timeless classics and statement pieces for men and women — shipped Pan-India.',
+  keywords: [
+    'fashion jewellery',
+    'accessories',
+    'jewellery India',
+    'jewellery online',
+    'Cluster Fascination',
+    'statement jewellery',
+    'affordable jewellery',
+    'buy jewellery online India',
+  ],
+  authors: [{ name: 'Cluster Fascination', url: SITE_URL }],
+  creator: 'Cluster Fascination',
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: SITE_URL,
+    siteName: 'Cluster Fascination',
+    title: 'Cluster Fascination',
+    description:
+      'Discover handpicked fashion jewellery & accessories at Cluster Fascination. Timeless classics and statement pieces — shipped Pan-India.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Cluster Fascination — Fashion Jewellery & Accessories',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cluster Fascination',
+    description:
+      'Handpicked fashion jewellery & accessories. Timeless classics and statement pieces shipped Pan-India.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
+  },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

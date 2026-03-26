@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Product } from "@/lib/api/home";
 import VariantSelectorShell from "./VariantSelectorShell";
+import Script from "next/script";
 
 function getProductDescription(product: Product) {
   if (product.description?.trim()) {
@@ -41,7 +42,6 @@ export async function generateMetadata({
   return {
     title,
     description,
-    metadataBase: siteUrl ? new URL(siteUrl) : undefined,
     alternates: {
       canonical: `/product/${product.slug}`,
     },
@@ -51,19 +51,14 @@ export async function generateMetadata({
       type: "website",
       url: `/product/${product.slug}`,
       images: primaryImage
-        ? [
-            {
-              url: primaryImage,
-              alt: product.name,
-            },
-          ]
-        : undefined,
+        ? [{ url: primaryImage, alt: product.name }]
+        : [{ url: '/og-image.png', alt: 'Cluster Fascination' }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: primaryImage ? [primaryImage] : undefined,
+      images: primaryImage ? [primaryImage] : ['/og-image.png'],
     },
   };
 }
@@ -80,10 +75,37 @@ export default async function ProductPage({
     notFound();
   }
 
+  const siteUrl = getSiteUrl() || 'https://clusterfascination.com';
+  const primaryImage = product.images?.[0] || product.image;
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || `${product.name} — Cluster Fascination`,
+    image: product.images?.length ? product.images : primaryImage ? [primaryImage] : [],
+    brand: { '@type': 'Brand', name: 'Cluster Fascination' },
+    url: `${siteUrl}/product/${product.slug}`,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: String(product.price),
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'Cluster Fascination' },
+      url: `${siteUrl}/product/${product.slug}`,
+    },
+  };
+
   return (
-    <Suspense>
-      <ProductPageInner product={product} />
-    </Suspense>
+    <>
+      <Script
+        id="product-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <Suspense>
+        <ProductPageInner product={product} />
+      </Suspense>
+    </>
   );
 }
 

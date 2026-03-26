@@ -71,13 +71,26 @@ export function Footer() {
                 Contact Us
               </Link>
             </li>
-            {['Shipping Options', 'Returns & Exchanges', 'FAQ'].map((item) => (
-              <li key={item}>
-                <Link href="#" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
-                  {item}
-                </Link>
-              </li>
-            ))}
+            <li>
+              <Link href="/shipping-policy" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                Shipping & Store Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/refund-policy" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                Refund & Return Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms-of-service" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                Terms of Service
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy-policy" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                Privacy Policy
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
@@ -85,8 +98,9 @@ export function Footer() {
       <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between text-xs text-text-secondary max-w-7xl mx-auto">
         <p>&copy; {new Date().getFullYear()} Cluster. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0">
-          <Link href="/policy/privacy" className="hover:text-text-primary">Privacy Policy</Link>
-          <Link href="/policy/terms" className="hover:text-text-primary">Terms of Service</Link>
+          <Link href="/privacy-policy" className="hover:text-text-primary">Privacy Policy</Link>
+          <Link href="/terms-of-service" className="hover:text-text-primary">Terms of Service</Link>
+          <Link href="/refund-policy" className="hover:text-text-primary">Return Policy</Link>
         </div>
       </div>
     </footer>
