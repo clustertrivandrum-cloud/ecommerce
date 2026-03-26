@@ -22,11 +22,6 @@ export function getSiteUrl(request?: Request) {
     return normalizeSiteUrl(configuredSiteUrl);
   }
 
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    return normalizeSiteUrl(vercelUrl);
-  }
-
   if (!request) return null;
 
   const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
