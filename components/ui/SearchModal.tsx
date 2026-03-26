@@ -394,7 +394,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             <span className="text-text-secondary line-through">₹{product.original_price.toFixed(2)}</span>
                           ) : null}
                           {product.is_free_delivery ? (
-                            <span className="text-[11px] uppercase tracking-[0.2em] text-accent-mint">Free delivery</span>
+                            <span className="text-[11px] uppercase tracking-[0.2em] text-accent-mint">Fast Shipping</span>
                           ) : null}
                         </div>
                       </div>

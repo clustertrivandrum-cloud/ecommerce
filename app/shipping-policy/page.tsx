@@ -78,15 +78,29 @@ export default function ShippingPolicyPage() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-text-primary mb-2">2. Do you offer COD (Cash on Delivery)?</h3>
-              <p>Yes, we offer Cash on Delivery (COD) as a payment option. You can also use other online payment methods as mentioned in the above FAQ.</p>
+              <p>No. We do not offer Cash on Delivery (COD). All orders must be prepaid using the online payment methods listed above.</p>
             </div>
             <div>
               <h3 className="text-lg font-bold text-text-primary mb-2">3. Will I get automatic refund for failed payments?</h3>
-              <p>Yes. You will get an automated refund into your original payment source within 7-10 working days.</p>
+              <p>No. We do not offer refunds once a payment has been successfully completed. If you face a payment issue or accidental duplicate charge, contact us through the WhatsApp icon on the storefront for assistance.</p>
             </div>
             <div>
               <h3 className="text-lg font-bold text-text-primary mb-2">4. What if I have issues with my order?</h3>
               <p>Please reach out to us from the Whatsapp icon on storefront. We will try to resolve all your issues on priority.</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-heading text-text-primary mb-8 tracking-wider uppercase border-b border-border/50 pb-3">Returns & Exchanges</h2>
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-lg font-bold text-text-primary mb-2">1. Do you accept returns or exchanges?</h3>
+              <p>No. We do not accept returns, exchanges, or refunds once an order has been placed and delivered.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary mb-2">2. What if I receive a damaged or incorrect item?</h3>
+              <p>If you receive a damaged or incorrect product, contact us promptly through the WhatsApp icon on the storefront with your order details and product photos. We will review the issue and assist you accordingly.</p>
             </div>
           </div>
         </section>

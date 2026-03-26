@@ -88,7 +88,7 @@ export default async function Home() {
           {[
             { label: 'Quick & Secure Shipping', sub: 'On all orders' },
             { label: 'Premium Quality', sub: 'Products' },
-            { label: 'Worldwide delivery', sub: 'On all orders' },
+            { label: 'Worldwide delivery', sub: "Across all purchase' },
             { label: '5k+ Happy Customers', sub: 'Trusted quality' },
           ].map((item) => (
             <div key={item.label} className="flex flex-col items-center text-center gap-1">
