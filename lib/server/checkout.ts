@@ -49,6 +49,7 @@ export type PaymentRequestOrder = {
   fulfillmentStatus: string | null;
   createdAt: string;
   paymentRequestCreatedAt: string | null;
+  shippingAddress: Record<string, unknown> | null;
   items: PaymentRequestOrderItem[];
 };
 
@@ -570,6 +571,21 @@ export async function ensureOrderPaymentRequestToken(orderId: string) {
   return token;
 }
 
+export async function orderMatchesPaymentRequestToken(orderId: string, token: string) {
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .select('id')
+    .eq('id', orderId)
+    .eq('payment_request_token', token)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return Boolean(data?.id);
+}
+
 export async function getPaymentRequestOrderByToken(token: string): Promise<PaymentRequestOrder | null> {
   const { data: order, error } = await supabaseAdmin
     .from('orders')
@@ -585,6 +601,7 @@ export async function getPaymentRequestOrderByToken(token: string): Promise<Paym
       fulfillment_status,
       created_at,
       payment_request_created_at,
+      shipping_address,
       order_items (
         id,
         title,
@@ -631,6 +648,7 @@ export async function getPaymentRequestOrderByToken(token: string): Promise<Paym
     fulfillmentStatus: order.fulfillment_status || null,
     createdAt: order.created_at,
     paymentRequestCreatedAt: order.payment_request_created_at || null,
+    shippingAddress: typeof order.shipping_address === 'object' ? (order.shipping_address as Record<string, unknown>) : null,
     items: ((order.order_items || []) as PaymentRequestOrderItem[]).map((item) => ({
       id: item.id,
       title: item.title || null,
@@ -639,6 +657,49 @@ export async function getPaymentRequestOrderByToken(token: string): Promise<Paym
       total_price: Number(item.total_price),
     })),
   };
+}
+
+export async function updatePaymentRequestOrderAddressByToken(
+  token: string,
+  address: {
+    firstName: string;
+    lastName: string;
+    addressLine: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  }
+) {
+  const order = await getPaymentRequestOrderByToken(token);
+  if (!order) {
+    throw new Error('Payment request not found or expired.');
+  }
+  
+  const fullName = `${address.firstName} ${address.lastName}`.trim();
+
+  const formattedAddress = {
+    name: fullName,
+    line1: address.addressLine,
+    line2: address.apartment || '',
+    city: address.city,
+    state: address.state,
+    postal_code: address.pincode,
+    country: 'India',
+    phone: order.guestPhone || '',
+  };
+
+  const { error } = await supabaseAdmin
+    .from('orders')
+    .update({
+      shipping_address: formattedAddress,
+      billing_address: formattedAddress,
+    })
+    .eq('id', order.id);
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function createPaymentRequestSessionByToken(token: string) {
@@ -806,11 +867,25 @@ export async function finalizePaidOrder({
 
   const { error: orderUpdateError } = await supabaseAdmin
     .from('orders')
-    .update({ financial_status: 'paid' })
+    .update({ 
+      financial_status: 'paid',
+      status: 'processing',
+      fulfillment_status: 'processing'
+    })
     .eq('id', orderId);
 
   if (orderUpdateError) {
     throw orderUpdateError;
+  }
+
+  const { error: preorderUpdateError } = await supabaseAdmin
+    .from('preorders')
+    .update({ status: 'fulfilled' })
+    .eq('order_id', orderId)
+    .neq('status', 'cancelled');
+
+  if (preorderUpdateError) {
+    throw preorderUpdateError;
   }
 
   try {

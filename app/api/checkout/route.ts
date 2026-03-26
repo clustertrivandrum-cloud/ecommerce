@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { CartItemInput, CheckoutData } from '@/lib/api/order';
 import {
   createPendingOrder,
+  ensureOrderPaymentRequestToken,
   getRazorpay,
   hasRazorpayCredentials,
   upsertPaymentRecord,
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
 
     // Server will recompute pricing/stock and coupon validity
     const { orderId, grandTotal } = await createPendingOrder(data, items);
+    const paymentRequestToken = await ensureOrderPaymentRequestToken(orderId);
     const amountInPaise = Math.round(grandTotal * 100);
 
     if (amountInPaise <= 0) {
@@ -50,6 +52,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       orderId,
+      paymentRequestToken,
       razorpayOrderId: razorpayOrder.id,
       amount: amountInPaise,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID || null,

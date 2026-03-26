@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { MoonStar, SunMedium } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,32 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className, compact = false }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        aria-label="Toggle theme"
+        title="Toggle theme"
+        className={cn(
+          'theme-toggle inline-flex items-center rounded-full border text-[11px] font-semibold uppercase tracking-[0.22em]',
+          compact ? 'h-11 w-11 justify-center p-0' : 'gap-3 px-2 py-2 pr-4',
+          className
+        )}
+      >
+        <span className="theme-toggle-indicator flex h-7 w-7 items-center justify-center rounded-full">
+          <SunMedium className="h-4 w-4" />
+        </span>
+        {compact ? <span className="sr-only">Toggle theme</span> : <span>Theme</span>}
+      </button>
+    );
+  }
+
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
   const Icon = theme === 'dark' ? MoonStar : SunMedium;
   const label = `${theme} mode`;

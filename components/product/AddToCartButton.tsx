@@ -78,7 +78,15 @@ export function AddToCartButton({
     }, 400);
   };
 
-  const handlePreorderConfirm = async (email: string) => {
+  const handlePreorderConfirm = async ({
+    email,
+    name,
+    phone,
+  }: {
+    email: string;
+    name: string;
+    phone: string;
+  }) => {
     if (!effectiveVariantId) {
       const message = 'This product is missing variant data required for preorder.';
       setPreorderError(message);
@@ -95,7 +103,9 @@ export function AddToCartButton({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          name: name.trim(),
           email: email.trim().toLowerCase(),
+          phone: phone.trim(),
           variantId: effectiveVariantId,
           quantity,
         }),
@@ -109,7 +119,7 @@ export function AddToCartButton({
       setPreorderNotice(
         payload.alreadyReserved
           ? `A preorder reservation for ${product.name} already exists for ${email.trim().toLowerCase()}.`
-          : `Preorder reserved for ${product.name}. Confirmation sent to ${email.trim().toLowerCase()}.`
+          : `Preorder reserved for ${product.name}. We saved your details and will contact ${email.trim().toLowerCase()} when it is ready.`
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not reserve preorder.';
@@ -163,6 +173,8 @@ export function AddToCartButton({
         onConfirm={handlePreorderConfirm}
         error={preorderError}
         defaultEmail={user?.email || undefined}
+        defaultName={user?.user_metadata?.full_name || user?.user_metadata?.name || undefined}
+        defaultPhone={user?.phone || user?.user_metadata?.phone || undefined}
         loading={isSubmittingPreorder}
       />
     </>

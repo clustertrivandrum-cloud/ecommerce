@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Instagram, Twitter } from 'lucide-react';
+import { Instagram, MapPin } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -19,15 +19,28 @@ export function Footer() {
             </span>
           </Link>
           <p className="text-text-secondary max-w-sm font-sans mb-8">
-            Curated elegance, redefined for the modern aesthete. 
-            Mobile-first, high-conversion experiences.
+            At Cluster Fascination, we believe jewellery is more than just an accessory. It reflects your style and your cherished moments.
           </p>
-          <div className="flex gap-4">
-            <a href="#" className="p-2 border border-border hover:bg-border transition-colors group">
-              <Instagram className="w-5 h-5 group-hover:text-accent-gold transition-colors" />
+          <div className="flex flex-col gap-4">
+            <a href="https://www.instagram.com/clusterfascination?igsh=MXJhamx5ejljdWkzZQ==" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-accent-gold transition-colors group">
+              <Instagram className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">Instagram</span>
             </a>
-            <a href="#" className="p-2 border border-border hover:bg-border transition-colors group">
-              <Twitter className="w-5 h-5 group-hover:text-accent-gold transition-colors" />
+            <a href="https://share.google/4HYEkxNDVewBf09NS" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-accent-gold transition-colors group">
+              <MapPin className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">Location</span>
+            </a>
+            <a href="https://wa.me/916282660237" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-accent-gold transition-colors group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              <span className="text-sm">WhatsApp Direct</span>
+            </a>
+            <a href="https://chat.whatsapp.com/CNiGdxAEIAh3VxRXFo6Yyc" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-accent-gold transition-colors group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              <span className="text-sm">WhatsApp Group</span>
             </a>
           </div>
         </div>
@@ -48,9 +61,19 @@ export function Footer() {
         <div className="col-span-1">
           <h3 className="text-sm font-medium mb-6 uppercase tracking-wider">Support</h3>
           <ul className="space-y-4">
-            {['Contact Us', 'Shipping Options', 'Returns & Exchanges', 'FAQ'].map((item) => (
+            <li>
+              <Link href="/about" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                About Us
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
+                Contact Us
+              </Link>
+            </li>
+            {['Shipping Options', 'Returns & Exchanges', 'FAQ'].map((item) => (
               <li key={item}>
-                <Link href="#" className="text-text-secondary hover:text-accent-mint transition-colors text-sm">
+                <Link href="#" className="text-text-secondary hover:text-accent-gold transition-colors text-sm">
                   {item}
                 </Link>
               </li>

@@ -32,7 +32,7 @@ function getWishlistProduct(item: WishlistItemRow): WishlistProductRow | null {
 }
 
 export default function WishlistPage() {
-  const { user } = useUserStore();
+  const { user, setAuthModalOpen } = useUserStore();
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,9 +106,9 @@ export default function WishlistPage() {
       <main className="max-w-7xl mx-auto px-6 md:px-12 py-32 flex flex-col items-center text-center">
         <h1 className="text-3xl font-heading mb-6 tracking-widest uppercase">Your Wishlist</h1>
         <p className="text-text-secondary mb-8">Please log in to view your saved items.</p>
-        <Link href="/auth" className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors tracking-widest uppercase">
+        <button onClick={() => setAuthModalOpen(true)} className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors tracking-widest uppercase">
           Sign In
-        </Link>
+        </button>
       </main>
     );
   }

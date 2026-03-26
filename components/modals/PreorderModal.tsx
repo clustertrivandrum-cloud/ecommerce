@@ -15,9 +15,11 @@ interface PreorderModalProps {
     price: number;
     expectedDate?: string;
   };
-  onConfirm: (email: string) => Promise<void>;
+  onConfirm: (details: { email: string; name: string; phone: string }) => Promise<void>;
   error?: string | null;
   defaultEmail?: string;
+  defaultName?: string;
+  defaultPhone?: string;
   loading?: boolean;
 }
 
@@ -28,15 +30,19 @@ export function PreorderModal({
   onConfirm,
   error,
   defaultEmail,
+  defaultName,
+  defaultPhone,
   loading = false,
 }: PreorderModalProps) {
   const [email, setEmail] = useState(defaultEmail || '');
+  const [name, setName] = useState(defaultName || '');
+  const [phone, setPhone] = useState(defaultPhone || '');
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onConfirm(email);
+    await onConfirm({ email, name, phone });
     onClose();
   };
 
@@ -77,6 +83,16 @@ export function PreorderModal({
           
           <input
             required
+            type="text"
+            placeholder="Your full name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            disabled={loading}
+            className="w-full bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors placeholder:text-text-secondary/50"
+          />
+
+          <input
+            required
             type="email"
             placeholder="Enter your email to reserve"
             value={email}
@@ -84,10 +100,20 @@ export function PreorderModal({
             disabled={loading}
             className="w-full bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors placeholder:text-text-secondary/50"
           />
+
+          <input
+            required
+            type="tel"
+            placeholder="Phone number"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            disabled={loading}
+            className="w-full bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors placeholder:text-text-secondary/50"
+          />
           
           <button
             type="submit"
-            disabled={!email || loading}
+            disabled={!name || !email || !phone || loading}
             className="w-full bg-accent-gold text-primary py-4 font-bold tracking-widest uppercase transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? 'Reserving...' : 'Confirm Reservation'}

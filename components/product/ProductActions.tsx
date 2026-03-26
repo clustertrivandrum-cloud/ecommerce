@@ -25,11 +25,12 @@ interface ProductActionsProps {
 export function ProductActions({ product, isStickyMobile, selectedVariant }: ProductActionsProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUserStore();
+  const { user, setAuthModalOpen } = useUserStore();
   const effectivePrice = selectedVariant?.price ?? product.price;
   const effectiveStock = selectedVariant?.stock ?? product.stock;
   const effectiveVariantId = selectedVariant?.id ?? product.variantId;
   const allowPreorder = selectedVariant?.allowPreorder ?? product.allow_preorder;
+  const isPreorder = effectiveStock === 0 && allowPreorder;
   const maxSelectableQuantity = effectiveStock > 0 ? effectiveStock : allowPreorder ? 10 : 1;
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -75,7 +76,7 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
     setWishlistNotice(null);
 
     if (!user) {
-      router.push(`/auth?redirect=${encodeURIComponent(pathname || `/product/${product.slug}`)}`);
+      setAuthModalOpen(true);
       return;
     }
 
@@ -104,6 +105,13 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
         {wishlistNotice ? (
           <NoticeBanner tone={wishlistNotice.tone} onDismiss={() => setWishlistNotice(null)}>
             {wishlistNotice.message}
+          </NoticeBanner>
+        ) : null}
+
+        {isPreorder ? (
+          <NoticeBanner tone="info">
+            <span className="font-medium text-text-primary">This product is available on preorder.</span>{' '}
+            Reserve it now and we will contact you when it is ready for payment.
           </NoticeBanner>
         ) : null}
 

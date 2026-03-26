@@ -25,6 +25,7 @@ import {
 interface CheckoutResponse {
   error?: string;
   orderId: string;
+  paymentRequestToken?: string | null;
   razorpayOrderId?: string | null;
   amount: number;
   razorpayKeyId: string | null;
@@ -116,7 +117,7 @@ function getEffectiveAddressName(addressFullName: string, profileFullName: strin
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
-  const { user } = useUserStore();
+  const { user, setAuthModalOpen } = useUserStore();
   const router = useRouter();
   const checkoutFlowRef = useRef<HTMLDivElement | null>(null);
   
@@ -400,6 +401,7 @@ export default function CheckoutPage() {
               amount: resData.amount / 100,
               razorpayOrderId,
               status: 'failed',
+              paymentRequestToken: resData.paymentRequestToken,
             }),
           });
 
@@ -458,7 +460,7 @@ export default function CheckoutPage() {
           contact: formData.phone,
         },
         theme: {
-          color: "#C9A96E"
+          color: '#2F5A37'
         },
         modal: {
           ondismiss: () => {
@@ -659,9 +661,9 @@ export default function CheckoutPage() {
               {!user && (
                 <div className="mb-6 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none">
                   <p className="text-text-secondary mb-4">Already have an account?</p>
-                  <Link href="/auth?redirect=/checkout" className="text-text-primary underline underline-offset-4 hover:text-accent-gold transition-colors">
+                  <button onClick={() => setAuthModalOpen(true)} className="text-text-primary underline underline-offset-4 hover:text-accent-gold transition-colors">
                     Log in for faster checkout
-                  </Link>
+                  </button>
                 </div>
               )}
 

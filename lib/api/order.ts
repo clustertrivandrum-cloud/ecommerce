@@ -30,6 +30,7 @@ export interface CartItemInput {
 
 export interface CheckoutSessionResponse {
   orderId: string;
+  paymentRequestToken?: string | null;
   razorpayOrderId?: string | null;
   amount: number;
   razorpayKeyId: string | null;

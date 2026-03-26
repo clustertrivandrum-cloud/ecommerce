@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { buildVariantOptionLabel } from '@/lib/api/sellable-variants';
+import { logAudit } from '@/lib/server/audit';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const MAX_PREORDER_QUANTITY = 10;
+
 type CreatePreorderInput = {
   email: string;
+  name?: string;
+  phone?: string;
   variantId: string;
   quantity?: number;
 };
@@ -79,6 +84,25 @@ export type CustomerPreorderSummary = {
   orderNumber: number | null;
   orderFinancialStatus: string | null;
 };
+
+function normalizeFullName(value: string | null | undefined) {
+  return value?.trim().replace(/\s+/g, ' ') || '';
+}
+
+function splitFullName(fullName: string) {
+  const normalized = normalizeFullName(fullName);
+  const [firstName = '', ...rest] = normalized.split(' ');
+  return {
+    firstName,
+    lastName: rest.join(' ') || null,
+  };
+}
+
+function normalizePhone(value: string | null | undefined) {
+  const normalized = value?.trim() || '';
+  const digits = normalized.replace(/\D/g, '');
+  return digits.length >= 10 ? normalized : null;
+}
 
 function normalizeVariantOptions(
   optionValues?: VariantOptionValueRow[] | null
@@ -195,13 +219,25 @@ export async function listCustomerPreordersByEmail(email: string): Promise<Custo
 
 export async function createPreorderReservation({
   email,
+  name,
+  phone,
   variantId,
   quantity = 1,
 }: CreatePreorderInput) {
   const normalizedEmail = email.trim().toLowerCase();
+  const normalizedName = normalizeFullName(name);
+  const normalizedPhone = normalizePhone(phone);
 
   if (!normalizedEmail) {
     throw new Error('Email is required.');
+  }
+
+  if (!normalizedName) {
+    throw new Error('Name is required.');
+  }
+
+  if (!normalizedPhone) {
+    throw new Error('A valid phone number is required.');
   }
 
   if (!variantId) {
@@ -210,6 +246,10 @@ export async function createPreorderReservation({
 
   if (!Number.isInteger(quantity) || quantity < 1) {
     throw new Error('Quantity must be at least 1.');
+  }
+
+  if (quantity > MAX_PREORDER_QUANTITY) {
+    throw new Error(`Quantity cannot exceed ${MAX_PREORDER_QUANTITY}.`);
   }
 
   const { data: variant, error: variantError } = await supabaseAdmin
@@ -255,13 +295,31 @@ export async function createPreorderReservation({
       .sort((a, b) => (a.position || 0) - (b.position || 0))
       .find((media) => media.media_url)?.media_url
     || null;
+  const { firstName, lastName } = splitFullName(normalizedName);
+  const customerPayload: {
+    email: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    updated_at: string;
+  } = {
+    email: normalizedEmail,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (firstName) {
+    customerPayload.first_name = firstName;
+    customerPayload.last_name = lastName;
+  }
+
+  if (normalizedPhone) {
+    customerPayload.phone = normalizedPhone;
+  }
 
   const { data: customer, error: customerError } = await supabaseAdmin
     .from('customers')
     .upsert(
-      {
-        email: normalizedEmail,
-      },
+      customerPayload,
       {
         onConflict: 'email',
       }
@@ -286,6 +344,18 @@ export async function createPreorderReservation({
   }
 
   if (existingReservation) {
+    await logAudit({
+      actorId: customer.id,
+      action: 'preorder.reserve.duplicate',
+      entityType: 'preorder',
+      entityId: existingReservation.id,
+      after: {
+        customer_id: customer.id,
+        variant_id: variantId,
+        quantity,
+      },
+    });
+
     return {
       preorderId: existingReservation.id,
       alreadyReserved: true,
@@ -309,9 +379,44 @@ export async function createPreorderReservation({
     .select('id')
     .single();
 
+  if (preorderError?.code === '23505') {
+    const { data: duplicateReservation, error: duplicateLookupError } = await supabaseAdmin
+      .from('preorders')
+      .select('id')
+      .eq('customer_id', customer.id)
+      .eq('variant_id', variantId)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (duplicateLookupError) {
+      throw duplicateLookupError;
+    }
+
+    if (duplicateReservation) {
+      return {
+        preorderId: duplicateReservation.id,
+        alreadyReserved: true,
+      };
+    }
+  }
+
   if (preorderError || !preorder) {
     throw preorderError || new Error('Preorder reservation could not be saved.');
   }
+
+  await logAudit({
+    actorId: customer.id,
+    action: 'preorder.reserve',
+    entityType: 'preorder',
+    entityId: preorder.id,
+    after: {
+      customer_id: customer.id,
+      variant_id: variantId,
+      quantity,
+      status: 'pending',
+      unit_price: variant.price || null,
+    },
+  });
 
   return {
     preorderId: preorder.id,

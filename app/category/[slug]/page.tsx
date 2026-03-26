@@ -112,12 +112,12 @@ export default function CategorySlugPage({ params }: PageProps) {
       {/* Subcategory pills */}
       {subcategories.length > 0 && (
         <div className="flex flex-wrap gap-3 mb-10">
-          <span className="px-4 py-2 text-xs border border-accent-gold text-accent-gold tracking-widest uppercase">All</span>
+          <span className="px-4 py-2 text-xs font-semibold border border-accent-gold text-accent-gold tracking-widest uppercase">All</span>
           {subcategories.map((sub) => (
             <Link
               key={sub.id}
               href={`/category/${sub.slug}`}
-              className="px-4 py-2 text-xs border border-border text-text-secondary hover:border-accent-gold hover:text-accent-gold transition-all tracking-widest uppercase"
+              className="px-4 py-2 text-xs font-medium border border-border text-text-primary hover:border-accent-gold hover:text-accent-gold transition-all tracking-widest uppercase"
             >
               {sub.name}
             </Link>

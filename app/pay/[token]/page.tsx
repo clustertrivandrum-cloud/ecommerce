@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { useParams } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { NoticeBanner } from '@/components/ui/NoticeBanner';
+import { INDIA_STATES } from '@/lib/india-states';
 
 type PaymentRequestOrderItem = {
   id: string;
@@ -26,6 +27,7 @@ type PaymentRequestOrder = {
   fulfillmentStatus: string | null;
   createdAt: string;
   paymentRequestCreatedAt: string | null;
+  shippingAddress: Record<string, unknown> | null;
   items: PaymentRequestOrderItem[];
 };
 
@@ -105,6 +107,30 @@ export default function PaymentRequestPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [address, setAddress] = useState({
+    firstName: '',
+    lastName: '',
+    addressLine: '',
+    apartment: '',
+    city: '',
+    state: '',
+    pincode: '',
+  });
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setAddress({ ...address, [e.target.name]: e.target.value });
+  };
+
+  const isAddressValid = Boolean(
+    order?.shippingAddress || (
+      address.firstName &&
+      address.lastName &&
+      address.addressLine &&
+      address.city &&
+      address.state &&
+      address.pincode
+    )
+  );
 
   const loadOrder = async () => {
     if (!token) return;
@@ -147,6 +173,7 @@ export default function PaymentRequestPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(order.shippingAddress ? {} : { address }),
       });
 
       const sessionPayload = await sessionResponse.json() as PaymentSessionResponse;
@@ -164,13 +191,14 @@ export default function PaymentRequestPage() {
           const statusResponse = await fetch('/api/checkout/status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId: sessionPayload.orderId,
-              amount: sessionPayload.amount! / 100,
-              razorpayOrderId,
-              status: 'failed',
-            }),
-          });
+              body: JSON.stringify({
+                orderId: sessionPayload.orderId,
+                amount: sessionPayload.amount! / 100,
+                razorpayOrderId,
+                status: 'failed',
+                paymentRequestToken: token,
+              }),
+            });
 
           const statusPayload = await statusResponse.json() as CheckoutStatusResponse;
           if (!statusResponse.ok) {
@@ -237,7 +265,7 @@ export default function PaymentRequestPage() {
           contact: order.guestPhone || '',
         },
         theme: {
-          color: '#C9A96E',
+          color: '#2F5A37',
         },
         modal: {
           ondismiss: () => {
@@ -327,6 +355,36 @@ export default function PaymentRequestPage() {
               </div>
             </div>
 
+            {!order.shippingAddress && (
+              <div className="border border-border bg-card p-8 space-y-4 col-span-1 lg:col-span-2 order-last lg:order-none">
+                <div>
+                  <h2 className="text-2xl font-heading mb-1">Shipping Address</h2>
+                  <p className="text-sm text-text-secondary">Please provide your shipping details to receive this preorder.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 text-sm pt-2">
+                  <input name="firstName" value={address.firstName} onChange={handleAddressChange} placeholder="First Name" className="col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                  <input name="lastName" value={address.lastName} onChange={handleAddressChange} placeholder="Last Name" className="col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                  <input name="addressLine" value={address.addressLine} onChange={handleAddressChange} placeholder="Address" className="col-span-2 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                  <input name="apartment" value={address.apartment} onChange={handleAddressChange} placeholder="Apartment, suite, etc. (optional)" className="col-span-2 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                  <input name="city" value={address.city} onChange={handleAddressChange} placeholder="City" className="col-span-2 md:col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                  <select
+                    name="state"
+                    value={address.state}
+                    onChange={handleAddressChange}
+                    className="col-span-2 md:col-span-1 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary"
+                  >
+                    <option value="" className="bg-card text-text-secondary">Select State</option>
+                    {INDIA_STATES.map((state) => (
+                      <option key={state} value={state} className="bg-card text-text-primary">
+                        {state}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="pincode" value={address.pincode} onChange={handleAddressChange} placeholder="Postal Code" className="col-span-2 bg-transparent border border-border p-4 outline-none focus:border-text-primary transition-colors text-text-primary placeholder:text-text-secondary/50" />
+                </div>
+              </div>
+            )}
+
             <div className="border border-border bg-card p-8 h-max space-y-6">
               <div>
                 <h2 className="text-xl font-heading mb-3">Payment</h2>
@@ -346,7 +404,8 @@ export default function PaymentRequestPage() {
               <button
                 type="button"
                 onClick={handlePayNow}
-                disabled={submitting || order.financialStatus === 'paid'}
+                disabled={submitting || order.financialStatus === 'paid' || !isAddressValid}
+                title={!isAddressValid ? "Please fill out your shipping address" : undefined}
                 className="w-full bg-accent-mint text-primary py-4 font-bold tracking-widest uppercase transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
               >
                 {order.financialStatus === 'paid' ? 'Already Paid' : submitting ? 'Opening Payment...' : 'Pay Now'}

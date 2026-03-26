@@ -97,6 +97,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <h3 className="text-xs md:text-sm font-medium text-text-primary group-hover:text-accent-gold transition-colors line-clamp-2 leading-relaxed">
           {product.name}
         </h3>
+        {isPreorder && (
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent-gold">
+            This product is available on preorder
+          </span>
+        )}
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-text-primary">
             ₹{product.price.toFixed(0)}

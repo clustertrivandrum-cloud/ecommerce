@@ -29,7 +29,7 @@ Focus:
 - bg-card: #141414
 - text-primary: #EDEDED
 - text-secondary: #A1A1A1
-- accent-gold: #C9A96E
+- accent-gold: #2F5A37
 - accent-mint: #A8D5C2
 - border: #262626
 

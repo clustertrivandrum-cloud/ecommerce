@@ -28,12 +28,13 @@ type PreordersResponse = {
 
 const statusStyles: Record<string, string> = {
   pending: 'border-accent-gold/30 bg-accent-gold/10 text-accent-gold',
+  payment_pending: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
   fulfilled: 'border-accent-mint/30 bg-accent-mint/10 text-accent-mint',
   cancelled: 'border-red-500/30 bg-red-950/20 text-red-300',
 };
 
 export default function PreordersPage() {
-  const { user, session } = useUserStore();
+  const { user, session, setAuthModalOpen } = useUserStore();
   const [preorders, setPreorders] = useState<Preorder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,9 +79,9 @@ export default function PreordersPage() {
       <main className="max-w-7xl mx-auto px-6 md:px-12 py-32 flex flex-col items-center">
         <h1 className="text-3xl font-heading mb-6">My Preorders</h1>
         <p className="text-text-secondary mb-8">Please log in to view your preorder reservations.</p>
-        <Link href="/auth?redirect=/preorders" className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors uppercase tracking-widest">
+        <button onClick={() => setAuthModalOpen(true)} className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors uppercase tracking-widest">
           Sign In
-        </Link>
+        </button>
       </main>
     );
   }
@@ -103,7 +104,7 @@ export default function PreordersPage() {
         <div className="border border-border bg-card px-8 py-12 text-center">
           <h2 className="text-2xl font-heading mb-4">No preorder reservations yet.</h2>
           <p className="text-text-secondary text-sm mb-8">
-            When you reserve an out-of-stock item, it will appear here until it is fulfilled or cancelled.
+            When you reserve an out-of-stock item, it will appear here until it is converted to an order, fulfilled, or cancelled.
           </p>
           <Link href="/products" className="bg-text-primary text-primary px-6 py-3 text-sm font-medium hover:bg-accent-gold transition-colors uppercase tracking-widest">
             Browse Products
@@ -152,10 +153,12 @@ export default function PreordersPage() {
                     {preorder.status}
                   </span>
                   <p className="text-sm text-text-secondary max-w-xs md:text-right">
-                    {preorder.orderId
-                      ? `This reservation has been converted into order #${preorder.orderNumber || preorder.orderId.slice(0, 8)}.`
+                    {preorder.orderId && preorder.orderFinancialStatus === 'paid'
+                      ? `This preorder has been paid and confirmed as order #${preorder.orderNumber || preorder.orderId.slice(0, 8)}.`
+                      : preorder.orderId || preorder.status === 'payment_pending'
+                      ? `This reservation is now order #${preorder.orderNumber || preorder.orderId?.slice(0, 8) || 'pending'} and is awaiting payment.`
                       : preorder.status === 'fulfilled'
-                      ? 'This reservation has been fulfilled and is ready for payment follow-up.'
+                      ? 'This reservation has been fulfilled.'
                       : preorder.status === 'cancelled'
                         ? 'This reservation has been cancelled and will no longer be held.'
                         : 'Your reservation is pending review. We will contact you when stock is ready.'}

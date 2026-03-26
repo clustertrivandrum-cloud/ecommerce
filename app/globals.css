@@ -7,6 +7,7 @@
   --color-text-secondary: var(--text-secondary);
   --color-accent-gold: var(--accent-gold);
   --color-accent-mint: var(--accent-mint);
+  --color-hero-accent: var(--hero-accent);
   --color-border: var(--border-color);
 
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -20,8 +21,9 @@
     --surface-muted: #1b1b1b;
     --text-primary: #ededed;
     --text-secondary: #a1a1a1;
-    --accent-gold: #c9a96e;
+    --accent-gold: #557f5f;
     --accent-mint: #a8d5c2;
+    --hero-accent: #6d9875;
     --border-color: #262626;
     --overlay-control-bg: rgb(8 8 8 / 0.34);
     --overlay-control-hover: rgb(8 8 8 / 0.5);
@@ -38,9 +40,9 @@
     --notice-success-bg: rgb(16 185 129 / 0.12);
     --notice-success-border: rgb(110 231 183 / 0.3);
     --notice-success-text: #a8d5c2;
-    --notice-info-bg: rgb(201 169 110 / 0.12);
-    --notice-info-border: rgb(201 169 110 / 0.28);
-    --notice-info-text: #e7c995;
+    --notice-info-bg: rgb(47 90 55 / 0.16);
+    --notice-info-border: rgb(85 127 95 / 0.34);
+    --notice-info-text: #a9c9af;
     --page-background:
       radial-gradient(circle at top, rgb(168 213 194 / 0.12), transparent 32%),
       linear-gradient(180deg, #141414 0%, #0b0b0b 58%, #080808 100%);
@@ -52,8 +54,9 @@
     --surface-muted: #f1f5f3;
     --text-primary: #141816;
     --text-secondary: #4f5d58;
-    --accent-gold: #b96d80;
+    --accent-gold: #2f5a37;
     --accent-mint: #7fc3b1;
+    --hero-accent: #5f8d67;
     --border-color: #bccdc6;
     --overlay-control-bg: rgb(255 255 255 / 0.9);
     --overlay-control-hover: rgb(255 255 255 / 0.97);
@@ -70,9 +73,9 @@
     --notice-success-bg: #eef8f4;
     --notice-success-border: #b7dfd2;
     --notice-success-text: #246b57;
-    --notice-info-bg: #fbf2f3;
-    --notice-info-border: #e7c2cb;
-    --notice-info-text: #a95f73;
+    --notice-info-bg: #eef5f0;
+    --notice-info-border: #b8d1bd;
+    --notice-info-text: #2f5a37;
     --page-background:
       radial-gradient(circle at top, rgb(183 239 224 / 0.08), transparent 16%),
       linear-gradient(180deg, #fdfefd 0%, #fafcfb 52%, #f6f9f7 100%);

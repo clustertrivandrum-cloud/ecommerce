@@ -54,20 +54,20 @@ export function HomeHeroCarousel({ slides }: HomeHeroCarouselProps) {
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/72 via-black/32 to-transparent" />
 
       <div className="absolute inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-7xl flex-col gap-4 p-6 md:p-16">
-        <span className="w-fit border border-accent-gold/30 px-4 py-1 text-sm font-medium uppercase tracking-[0.3em] text-accent-gold">
+        <span className="w-fit border border-hero-accent/40 px-4 py-1 text-sm font-medium uppercase tracking-[0.3em] text-hero-accent [text-shadow:0_6px_20px_rgba(0,0,0,0.24)]">
           {activeSlide.badgeText}
         </span>
         <h1 className="text-5xl font-heading font-medium leading-[1.05] tracking-tight text-white md:text-7xl">
           {activeSlide.title}
           <br />
-          <span className="text-accent-gold">{activeSlide.highlightText}</span>
+          <span className="text-hero-accent [text-shadow:0_10px_30px_rgba(0,0,0,0.28)]">{activeSlide.highlightText}</span>
         </h1>
         <p className="mt-2 mb-4 max-w-md text-base leading-relaxed text-white/82">
           {activeSlide.description}
         </p>
         <Link
           href={activeSlide.ctaHref}
-          className="group inline-flex w-fit items-center justify-center gap-3 bg-accent-gold px-8 py-4 text-sm font-bold uppercase tracking-wider text-primary transition-all hover:bg-text-primary active:scale-95"
+          className="group inline-flex w-fit items-center justify-center gap-3 bg-hero-accent px-8 py-4 text-sm font-bold uppercase tracking-wider text-primary transition-all hover:bg-text-primary active:scale-95"
         >
           {activeSlide.ctaLabel}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -101,7 +101,7 @@ export function HomeHeroCarousel({ slides }: HomeHeroCarouselProps) {
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 aria-label={`Go to slide ${index + 1}`}
-                className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-10 bg-accent-gold' : 'hero-dot w-2.5'}`}
+                className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-10 bg-hero-accent' : 'hero-dot w-2.5'}`}
               />
             ))}
           </div>

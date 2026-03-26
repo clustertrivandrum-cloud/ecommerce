@@ -12,7 +12,7 @@ import { useUserStore } from '@/store/userStore';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, setUser, setSession } = useUserStore();
+  const { user, setUser, setSession, setAuthModalOpen } = useUserStore();
 
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
@@ -88,9 +88,9 @@ export default function ProfilePage() {
       <main className="max-w-7xl mx-auto px-6 md:px-12 py-32 flex flex-col items-center">
         <h1 className="text-3xl font-heading mb-6">Access Profile</h1>
         <p className="text-text-secondary mb-8">Please log in to view your profile and orders.</p>
-        <Link href="/auth" className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors uppercase tracking-widest">
+        <button onClick={() => setAuthModalOpen(true)} className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors uppercase tracking-widest">
           Sign In
-        </Link>
+        </button>
       </main>
     );
   }
@@ -224,7 +224,6 @@ export default function ProfilePage() {
             <Link href="/orders" className="block text-text-secondary hover:text-text-primary transition-colors">Order History</Link>
             <Link href="/preorders" className="block text-text-secondary hover:text-text-primary transition-colors">My Preorders</Link>
             <Link href="/wishlist" className="block text-text-secondary hover:text-text-primary transition-colors">Wishlist</Link>
-            <Link href="/profile/debug" className="block text-text-secondary hover:text-text-primary transition-colors">Payment Debug</Link>
             <button
               type="button"
               onClick={handleSignOut}

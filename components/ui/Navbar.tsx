@@ -21,7 +21,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
-  const { user, setUser, setSession } = useUserStore();
+  const { user, setUser, setSession, setAuthModalOpen } = useUserStore();
   const router = useRouter();
   const cartItemsCount = useCartStore((state) => 
     state.items.reduce((acc, item) => acc + item.quantity, 0)
@@ -135,8 +135,11 @@ export function Navbar() {
             </Link>
           </div>
 
-          <Link href="/" className="group flex justify-center self-center px-2 md:px-4">
-            <span className="brand-logo-shell flex h-12 w-12 items-center justify-center rounded-full p-1.5 transition-transform group-hover:scale-[1.02] md:h-14 md:w-14 md:p-1.5">
+          <Link href="/" className="group flex items-center justify-center self-center px-2 md:px-4 gap-3 md:gap-5">
+            <span className="hidden md:block font-heading text-lg md:text-xl tracking-[0.25em] uppercase text-text-primary group-hover:text-accent-gold transition-colors">
+              Cluster
+            </span>
+            <span className="brand-logo-shell flex h-12 w-12 items-center justify-center rounded-full p-1.5 transition-transform group-hover:scale-[1.02] md:h-14 md:w-14 md:p-1.5 z-10 shrink-0">
               <Image
                 src="/logo.svg"
                 alt="Cluster Fascination"
@@ -145,6 +148,9 @@ export function Navbar() {
                 className="h-full w-full object-contain"
                 priority
               />
+            </span>
+            <span className="hidden md:block font-heading text-lg md:text-xl tracking-[0.25em] uppercase text-text-primary group-hover:text-accent-gold transition-colors">
+              Fascination
             </span>
           </Link>
 
@@ -161,9 +167,15 @@ export function Navbar() {
               <ThemeToggle compact />
             </div>
             
-            <Link href="/profile" className="hidden lg:block hover:text-accent-gold transition-colors">
-              <User className="w-5 h-5" />
-            </Link>
+            {user ? (
+              <Link href="/profile" className="hidden lg:block hover:text-accent-gold transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
+            ) : (
+              <button onClick={() => setAuthModalOpen(true)} className="hidden lg:block hover:text-accent-gold transition-colors">
+                <User className="w-5 h-5" />
+              </button>
+            )}
 
             <button 
               onClick={() => setCartOpen(true)} 
@@ -220,13 +232,26 @@ export function Navbar() {
               {user?.email ?? 'Browse the collection'}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Link
-                href={user ? '/profile' : '/auth'}
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
-              >
-                {user ? 'My Account' : 'Sign In'}
-              </Link>
+              {user ? (
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
+                >
+                  My Account
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalOpen(true);
+                  }}
+                  className="rounded-full border border-border px-4 py-3 text-center text-[11px] uppercase tracking-[0.24em] text-text-primary transition-colors hover:border-accent-gold hover:text-accent-gold"
+                >
+                  Sign In
+                </button>
+              )}
               <Link
                 href="/wishlist"
                 onClick={() => setMobileMenuOpen(false)}

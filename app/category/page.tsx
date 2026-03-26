@@ -39,7 +39,7 @@ export default function CategoryPage() {
                   <Link
                     key={sub.id}
                     href={`/category/${sub.slug}`}
-                    className="px-4 py-2 text-xs border border-border text-text-secondary hover:border-accent-gold hover:text-accent-gold transition-all tracking-widest uppercase"
+                    className="px-4 py-2 text-xs font-medium border border-border text-text-primary hover:border-accent-gold hover:text-accent-gold transition-all tracking-widest uppercase"
                   >
                     {sub.name}
                   </Link>

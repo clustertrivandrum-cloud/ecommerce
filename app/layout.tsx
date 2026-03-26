@@ -5,6 +5,7 @@ import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
 import { AuthSessionSync } from "@/components/providers/AuthSessionSync";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AuthModal } from "@/components/modals/AuthModal";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -24,7 +25,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="dark"
+      data-theme="light"
       suppressHydrationWarning
       className={`${playfair.variable} h-full antialiased scroll-smooth`}
     >
@@ -35,6 +36,7 @@ export default function RootLayout({
           <Navbar />
           <div className="flex-1 pt-[88px] md:pt-[112px]">{children}</div>
           <Footer />
+          <AuthModal />
         </ThemeProvider>
       </body>
     </html>

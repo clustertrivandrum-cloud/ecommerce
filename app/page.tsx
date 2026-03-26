@@ -31,10 +31,10 @@ export default async function Home() {
       <section className="px-6 md:px-12 max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 border-y border-border">
           {[
-            { label: 'Anti-Tarnish', sub: 'Long-lasting shine' },
-            { label: 'Hypoallergenic', sub: 'Skin-friendly materials' },
-            { label: 'Free Delivery', sub: 'On all orders' },
-            { label: '5000+ Happy Customers', sub: 'Trusted quality' },
+            { label: 'Quick & Secure Shipping', sub: 'On all orders' },
+            { label: 'Premium Quality', sub: 'Products' },
+            { label: 'Worldwide delivery', sub: 'On all orders' },
+            { label: '3500+ Happy Customers', sub: 'Trusted quality' },
           ].map((item) => (
             <div key={item.label} className="flex flex-col items-center text-center gap-1">
               <span className="text-accent-gold font-heading text-sm tracking-wide">{item.label}</span>
@@ -128,18 +128,18 @@ export default async function Home() {
           <p className="text-text-secondary leading-relaxed">
             {homeBanner.promiseDescription}
           </p>
-          <div className="grid grid-cols-3 gap-4 border-t border-border pt-6">
-            <div className="text-center">
-              <span className="block text-2xl font-heading text-accent-gold">18K</span>
-              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Gold Plated</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-border pt-6 mt-6">
+            <div className="text-center sm:text-left space-y-1">
+              <span className="block text-lg font-heading text-accent-gold">Fast Shipping</span>
+              <span className="text-text-secondary text-xs block leading-relaxed">Quick and reliable delivery to your doorstep.</span>
             </div>
-            <div className="text-center">
-              <span className="block text-2xl font-heading text-accent-gold">1 Yr</span>
-              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Warranty</span>
+            <div className="text-center sm:text-left space-y-1">
+              <span className="block text-lg font-heading text-accent-gold">Secure Payments</span>
+              <span className="text-text-secondary text-xs block leading-relaxed">Safe and trusted payment methods.</span>
             </div>
-            <div className="text-center">
-              <span className="block text-2xl font-heading text-accent-gold">5K+</span>
-              <span className="text-text-secondary text-xs uppercase tracking-widest mt-1 block">Customers</span>
+            <div className="text-center sm:text-left space-y-1">
+              <span className="block text-lg font-heading text-accent-gold">Quality Assured</span>
+              <span className="text-text-secondary text-xs block leading-relaxed">Carefully selected jewelry you can trust.</span>
             </div>
           </div>
         </div>

@@ -4,6 +4,8 @@ import { createPreorderReservation, listCustomerPreordersByEmail } from '@/lib/s
 
 type PreorderBody = {
   email?: string;
+  name?: string;
+  phone?: string;
   variantId?: string;
   quantity?: number;
 };
@@ -54,17 +56,19 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { email, variantId, quantity } = await req.json() as PreorderBody;
+    const { email, name, phone, variantId, quantity } = await req.json() as PreorderBody;
 
-    if (!email || !variantId) {
+    if (!email || !name || !phone || !variantId) {
       return NextResponse.json(
-        { error: 'Email and variant id are required.' },
+        { error: 'Name, email, phone, and variant id are required.' },
         { status: 400 }
       );
     }
 
     const preorder = await createPreorderReservation({
       email,
+      name,
+      phone,
       variantId,
       quantity,
     });

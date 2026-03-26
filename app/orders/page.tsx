@@ -1,7 +1,6 @@
 'use client';
 
 import { useUserStore } from '@/store/userStore';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,7 +16,7 @@ type OrderItem = {
 };
 type Order = {
   id: string;
-  order_number: string;
+  order_number: number | null;
   financial_status: string;
   fulfillment_status: string;
   grand_total: number;
@@ -25,9 +24,15 @@ type Order = {
   order_items: OrderItem[];
 };
 
+type OrdersResponse = {
+  error?: string;
+  orders?: Order[];
+};
+
 type RetryPaymentResponse = {
   error?: string;
   orderId: string;
+  paymentRequestToken?: string | null;
   razorpayOrderId?: string | null;
   amount: number;
   razorpayKeyId: string | null;
@@ -98,7 +103,7 @@ function OrdersPageFallback() {
 }
 
 function OrdersPageContent() {
-  const { user } = useUserStore();
+  const { user, session, setAuthModalOpen } = useUserStore();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,37 +115,52 @@ function OrdersPageContent() {
   const checkoutMessage = searchParams.get('message');
 
   useEffect(() => {
-    if (!user) return;
+    async function fetchOrders(accessToken: string) {
+      setLoading(true);
+      setOrderNotice(null);
 
-    async function fetchOrders() {
-      const { data } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          order_number,
-          financial_status,
-          fulfillment_status,
-          grand_total,
-          created_at,
-          order_items ( title, variant_title, quantity, unit_price, total_price )
-        `)
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
+      try {
+        const response = await fetch('/api/orders', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          cache: 'no-store',
+        });
 
-      if (data) setOrders(data);
-      setLoading(false);
+        const payload = await response.json() as OrdersResponse;
+        if (!response.ok) {
+          throw new Error(payload.error || 'Could not load orders.');
+        }
+
+        setOrders(payload.orders || []);
+      } catch (error) {
+        setOrders([]);
+        setOrderNotice({
+          tone: 'error',
+          text: error instanceof Error ? error.message : 'Could not load orders.',
+        });
+      } finally {
+        setLoading(false);
+      }
     }
-    fetchOrders();
-  }, [user]);
+
+    if (!user || !session?.access_token) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchOrders(session.access_token);
+  }, [session?.access_token, user]);
 
   if (!user) {
     return (
       <main className="max-w-7xl mx-auto px-6 md:px-12 py-32 flex flex-col items-center text-center">
         <h1 className="text-3xl font-heading mb-6 tracking-widest uppercase">Order History</h1>
         <p className="text-text-secondary mb-8">Please log in to view your orders.</p>
-        <Link href="/auth" className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors tracking-widest uppercase">
+        <button onClick={() => setAuthModalOpen(true)} className="bg-text-primary text-primary px-8 py-4 text-sm font-medium hover:bg-accent-gold transition-colors tracking-widest uppercase">
           Sign In
-        </Link>
+        </button>
       </main>
     );
   }
@@ -171,9 +191,16 @@ function OrdersPageContent() {
     setRetryingOrderId(orderId);
     setOrderNotice(null);
     try {
+      if (!session?.access_token) {
+        throw new Error('Your session expired. Please sign in again.');
+      }
+
       const retryResponse = await fetch('/api/orders/retry', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ orderId }),
       });
 
@@ -197,6 +224,7 @@ function OrdersPageContent() {
               amount: retryData.amount / 100,
               razorpayOrderId,
               status: 'failed',
+              paymentRequestToken: retryData.paymentRequestToken,
             }),
           });
 
@@ -259,7 +287,7 @@ function OrdersPageContent() {
           },
         },
         theme: {
-          color: '#C9A96E',
+          color: '#2F5A37',
         },
       };
 
@@ -318,11 +346,11 @@ function OrdersPageContent() {
           {orders.map((order) => (
             <div
               key={order.id}
-              className={`border p-6 bg-card ${highlightedOrderId === order.id ? 'border-accent-gold shadow-[0_0_0_1px_rgba(201,169,110,0.35)]' : 'border-border'}`}
+              className={`border p-6 bg-card ${highlightedOrderId === order.id ? 'border-accent-gold shadow-[0_0_0_1px_rgba(47,90,55,0.35)]' : 'border-border'}`}
             >
               <div className="flex flex-wrap justify-between gap-4 mb-6 pb-6 border-b border-border">
                 <div>
-                  <h3 className="font-bold mb-1">Order #{order.order_number}</h3>
+                  <h3 className="font-bold mb-1">Order #{order.order_number || order.id.slice(0, 8)}</h3>
                   <p className="text-text-secondary text-sm">{new Date(order.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">

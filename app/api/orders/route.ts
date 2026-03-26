@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createRetryPaymentSession, ensureOrderPaymentRequestToken } from '@/lib/server/checkout';
-import { customerCanAccessOrder } from '@/lib/server/orders';
-
-type RetryOrderBody = {
-  orderId: string;
-};
+import { listCustomerOrdersByIdentity } from '@/lib/server/orders';
 
 function getAuthClient(token: string) {
   return createClient(
@@ -21,10 +16,11 @@ function getAuthClient(token: string) {
   );
 }
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
@@ -39,29 +35,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const { orderId } = await req.json() as RetryOrderBody;
-
-    if (!orderId) {
-      return NextResponse.json({ error: 'Order id is required.' }, { status: 400 });
-    }
-
-    const canAccessOrder = await customerCanAccessOrder({
-      orderId,
+    const orders = await listCustomerOrdersByIdentity({
       userId: user.id,
       email: user.email,
     });
 
-    if (!canAccessOrder) {
-      return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
-    }
-
-    const session = await createRetryPaymentSession(orderId);
-    const paymentRequestToken = await ensureOrderPaymentRequestToken(orderId);
-    return NextResponse.json({ success: true, ...session, paymentRequestToken });
+    return NextResponse.json({ success: true, orders });
   } catch (err: unknown) {
-    console.error('Retry payment session error', err);
+    console.error('Order fetch error', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Could not create retry payment session.' },
+      { error: err instanceof Error ? err.message : 'Could not load orders.' },
       { status: 500 }
     );
   }
