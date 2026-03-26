@@ -53,6 +53,8 @@ export type PaymentRequestOrder = {
   items: PaymentRequestOrderItem[];
 };
 
+type CompleteOrderPaymentResult = 'paid' | 'already_paid';
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -729,21 +731,33 @@ export async function upsertPaymentRecord({
   amount?: number;
   status: PaymentStatus;
 }) {
-  const { data: existingPayment, error: existingPaymentError } = await supabaseAdmin
+  const normalizedProviderReference = providerReference.trim();
+  const existingPaymentQuery = supabaseAdmin
     .from('payments')
-    .select('id')
-    .eq('order_id', orderId)
-    .eq('provider', provider)
-    .maybeSingle();
+    .select('id, order_id')
+    .eq('provider', provider);
+
+  const { data: existingPayment, error: existingPaymentError } = normalizedProviderReference
+    ? await existingPaymentQuery
+        .eq('provider_reference', normalizedProviderReference)
+        .maybeSingle()
+    : await existingPaymentQuery
+        .eq('order_id', orderId)
+        .is('provider_reference', null)
+        .maybeSingle();
 
   if (existingPaymentError) {
     throw existingPaymentError;
   }
 
+  if (existingPayment?.order_id && existingPayment.order_id !== orderId) {
+    throw new Error('Payment reference is already assigned to another order.');
+  }
+
   const payload = {
     order_id: orderId,
     provider,
-    provider_reference: providerReference,
+    provider_reference: normalizedProviderReference,
     amount,
     status,
   };
@@ -774,12 +788,20 @@ export async function upsertPaymentRecord({
   return newPayment.id;
 }
 
-function aggregateOrderItems(items: OrderItemRow[]) {
-  return items.reduce<Record<string, number>>((acc, item) => {
-    if (!item.variant_id) return acc;
-    acc[item.variant_id] = (acc[item.variant_id] || 0) + item.quantity;
-    return acc;
-  }, {});
+export async function completeOrderPayment(orderId: string) {
+  const { data, error } = await supabaseAdmin.rpc('complete_order_payment', {
+    p_order_id: orderId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data !== 'paid' && data !== 'already_paid') {
+    throw new Error('Unexpected order payment completion result.');
+  }
+
+  return data as CompleteOrderPaymentResult;
 }
 
 export async function finalizePaidOrder({
@@ -801,91 +823,19 @@ export async function finalizePaidOrder({
     status: 'paid',
   });
 
-  const { data: order, error: orderError } = await supabaseAdmin
+  const completionResult = await completeOrderPayment(orderId);
+  const { error: orderStatusError } = await supabaseAdmin
     .from('orders')
-    .select('financial_status')
+    .update({ status: 'processing' })
     .eq('id', orderId)
-    .single();
+    .neq('status', 'processing');
 
-  if (orderError || !order) {
-    throw orderError || new Error('Order not found.');
+  if (orderStatusError) {
+    throw orderStatusError;
   }
 
-  if (order.financial_status === 'paid') {
+  if (completionResult === 'already_paid') {
     return;
-  }
-
-  const { data: orderItems, error: orderItemsError } = await supabaseAdmin
-    .from('order_items')
-    .select('variant_id, quantity')
-    .eq('order_id', orderId);
-
-  if (orderItemsError) {
-    throw orderItemsError;
-  }
-
-  const variantQuantities = aggregateOrderItems((orderItems || []) as OrderItemRow[]);
-
-  for (const [variantId, quantity] of Object.entries(variantQuantities)) {
-    const { data: inventoryItem, error: inventoryError } = await supabaseAdmin
-      .from('inventory_items')
-      .select('id, available_quantity, reserved_quantity, location_id')
-      .eq('variant_id', variantId)
-      .limit(1)
-      .single();
-
-    if (inventoryError || !inventoryItem) {
-      throw inventoryError || new Error(`Inventory not found for variant ${variantId}.`);
-    }
-
-    const { error: movementError } = await supabaseAdmin
-      .from('inventory_movements')
-      .insert({
-        variant_id: variantId,
-        location_id: inventoryItem.location_id,
-        quantity: -quantity,
-        movement_type: 'sale',
-        reference_id: orderId,
-      });
-
-    if (movementError) {
-      throw movementError;
-    }
-
-    const { error: inventoryUpdateError } = await supabaseAdmin
-      .from('inventory_items')
-      .update({
-        available_quantity: Math.max(0, Number(inventoryItem.available_quantity || 0) - quantity),
-        reserved_quantity: Math.max(0, Number(inventoryItem.reserved_quantity || 0) - quantity),
-      })
-      .eq('id', inventoryItem.id);
-
-    if (inventoryUpdateError) {
-      throw inventoryUpdateError;
-    }
-  }
-
-  const { error: orderUpdateError } = await supabaseAdmin
-    .from('orders')
-    .update({ 
-      financial_status: 'paid',
-      status: 'processing',
-      fulfillment_status: 'processing'
-    })
-    .eq('id', orderId);
-
-  if (orderUpdateError) {
-    throw orderUpdateError;
-  }
-
-  const { error: preorderUpdateError } = await supabaseAdmin
-    .from('preorders')
-    .update({ status: 'fulfilled' })
-    .eq('order_id', orderId)
-    .neq('status', 'cancelled');
-
-  if (preorderUpdateError) {
-    throw preorderUpdateError;
   }
 
   try {
@@ -954,11 +904,16 @@ export async function markOrderPaymentFailed({
 }
 
 export async function getOrderIdByProviderReference(provider: string, providerReference: string) {
+  const normalizedProviderReference = providerReference.trim();
+  if (!normalizedProviderReference) {
+    return null;
+  }
+
   const { data, error } = await supabaseAdmin
     .from('payments')
     .select('order_id')
     .eq('provider', provider)
-    .eq('provider_reference', providerReference)
+    .eq('provider_reference', normalizedProviderReference)
     .maybeSingle();
 
   if (error) {

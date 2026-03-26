@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         
         <section className="space-y-4">
           <p>
-            This Privacy Policy ("Privacy Policy") explains how we use your information when you access or use our storefront, its corresponding mobile site or mobile application (collectively, "Storefront"), and/or purchase products, and/or utilize any services or other offerings made available through the Storefront (collectively, "Storefront Features").
+            This Privacy Policy (&quot;Privacy Policy&quot;) explains how we use your information when you access or use our storefront, its corresponding mobile site or mobile application (collectively, &quot;Storefront&quot;), and/or purchase products, and/or utilize any services or other offerings made available through the Storefront (collectively, &quot;Storefront Features&quot;).
           </p>
           <p>
             This Privacy Policy does not apply to any information that you provide to, or that is collected by, any third-party. Please consult directly with such third-party about its information security practices, policies, and procedures.
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-xl font-heading text-text-primary mb-4 tracking-wider uppercase">User Acceptance</h2>
           <p>
-            By accessing or using the Storefront, you agree to the terms of this Privacy Policy for collection, use, storage, disclosure, and otherwise processing of your personal information (including sensitive personal data or information) in accordance with the terms and conditions of this Privacy Policy and as permitted under applicable laws, including but not limited to the Information Technology Act, 2000 and the rules framed thereunder ("IT Laws").
+            By accessing or using the Storefront, you agree to the terms of this Privacy Policy for collection, use, storage, disclosure, and otherwise processing of your personal information (including sensitive personal data or information) in accordance with the terms and conditions of this Privacy Policy and as permitted under applicable laws, including but not limited to the Information Technology Act, 2000 and the rules framed thereunder (&quot;IT Laws&quot;).
           </p>
         </section>
         
@@ -53,6 +53,16 @@ export default function PrivacyPolicyPage() {
             <li>To prevent and detect fraud and abuse.</li>
             <li>To help improve the quality and design of our Storefront and/ or Storefront Features and to create new features, promotions, functionality, and services.</li>
             <li>To fulfil any other purpose for which you provide us the information and/or for any other purpose with your consent.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-heading text-text-primary mb-4 tracking-wider uppercase">Cookies & Analytics</h2>
+          <ul className="list-disc pl-5 space-y-3">
+            <li>We use essential browser storage to keep features like theme preferences and your shopping experience working correctly.</li>
+            <li>We use Google Analytics to understand storefront traffic and site usage only when you explicitly consent through our cookie banner.</li>
+            <li>If you decline analytics, Google Analytics remains disabled for your browser session and future visits on that device unless you later change your preference.</li>
+            <li>You can reopen your analytics choice at any time from the &quot;Cookie Preferences&quot; link in the footer.</li>
           </ul>
         </section>
 

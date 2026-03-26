@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram, MapPin } from 'lucide-react';
+import { AnalyticsPreferencesButton } from './AnalyticsPreferencesButton';
 
 export function Footer() {
   return (
@@ -101,6 +102,7 @@ export function Footer() {
           <Link href="/privacy-policy" className="hover:text-text-primary">Privacy Policy</Link>
           <Link href="/terms-of-service" className="hover:text-text-primary">Terms of Service</Link>
           <Link href="/refund-policy" className="hover:text-text-primary">Return Policy</Link>
+          <AnalyticsPreferencesButton />
         </div>
       </div>
     </footer>

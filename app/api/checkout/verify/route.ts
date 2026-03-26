@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   finalizePaidOrder,
-  markOrderPaymentFailed,
+  getOrderIdByProviderReference,
   verifyRazorpaySignature,
 } from '@/lib/server/checkout';
 import { logAudit } from '@/lib/server/audit';
@@ -30,14 +30,12 @@ export async function POST(req: Request) {
       razorpaySignature,
     });
 
-    if (!isValidSignature) {
-      await markOrderPaymentFailed({
-        orderId,
-        provider: 'razorpay',
-        providerReference: razorpayOrderId,
-        amount,
-      });
+    const matchedOrderId = await getOrderIdByProviderReference('razorpay', razorpayOrderId);
+    if (!matchedOrderId || matchedOrderId !== orderId) {
+      return NextResponse.json({ error: 'Payment does not belong to this order.' }, { status: 400 });
+    }
 
+    if (!isValidSignature) {
       return NextResponse.json({ error: 'Payment verification failed.' }, { status: 400 });
     }
 

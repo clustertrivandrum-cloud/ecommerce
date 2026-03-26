@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
 import { AuthSessionSync } from "@/components/providers/AuthSessionSync";
+import { AnalyticsConsent } from "@/components/providers/AnalyticsConsent";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthModal } from "@/components/modals/AuthModal";
 
@@ -96,6 +97,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans selection:bg-accent-gold/20">
         <ThemeProvider>
           <AuthSessionSync />
+          <Suspense fallback={null}>
+            <AnalyticsConsent />
+          </Suspense>
           <Navbar />
           <div className="flex-1 pt-[124px] md:pt-[148px]">{children}</div>
           <Footer />
