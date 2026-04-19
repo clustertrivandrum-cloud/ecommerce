@@ -102,12 +102,34 @@ export async function getCategories(): Promise<Category[]> {
 
   if (!data.length) return [];
 
+  // Find categories missing images
+  const missingImageIds = data.filter(c => !c.banner_image_url && !c.image_url).map(c => c.id);
+  const categoryImageMap: Record<string, string> = {};
+
+  if (missingImageIds.length > 0) {
+    const { data: fallbackMedia } = await supabase
+      .from('products')
+      .select('category_id, product_media ( media_url )')
+      .in('category_id', missingImageIds)
+      .eq('status', 'active');
+      
+    if (fallbackMedia) {
+      for (const item of fallbackMedia) {
+        if (!categoryImageMap[item.category_id] && item.product_media && (item.product_media as any[]).length > 0) {
+          categoryImageMap[item.category_id] = (item.product_media as any[])[0].media_url;
+        }
+      }
+    }
+  }
+
+  const getCatImage = (cat: any) => cat.banner_image_url || cat.image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
+
   // Top-level categories only (parent_id is null)
   const parents = data.filter(c => c.parent_id === null).map(cat => ({
     id: cat.id,
     name: cat.name,
     slug: cat.slug,
-    image: cat.banner_image_url || cat.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+    image: getCatImage(cat),
     parentId: null,
     bannerKicker: cat.banner_kicker || undefined,
     bannerTitle: cat.banner_title || undefined,
@@ -120,7 +142,7 @@ export async function getCategories(): Promise<Category[]> {
         id: sub.id,
         name: sub.name,
         slug: sub.slug,
-        image: sub.banner_image_url || sub.image_url || cat.banner_image_url || cat.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+        image: getCatImage(sub),
         parentId: cat.id,
         bannerKicker: sub.banner_kicker || undefined,
         bannerTitle: sub.banner_title || undefined,
@@ -142,12 +164,34 @@ export async function getSubcategories(parentSlug: string): Promise<Category[]> 
   if (!parent) return [];
 
   const data = await fetchCategoryRows({ parentId: parent.id });
+  if (!data || !data.length) return [];
 
-  return (data || []).map(cat => ({
+  const missingImageIds = data.filter(c => !c.banner_image_url && !c.image_url).map(c => c.id);
+  const categoryImageMap: Record<string, string> = {};
+
+  if (missingImageIds.length > 0) {
+    const { data: fallbackMedia } = await supabase
+      .from('products')
+      .select('category_id, product_media ( media_url )')
+      .in('category_id', missingImageIds)
+      .eq('status', 'active');
+      
+    if (fallbackMedia) {
+      for (const item of fallbackMedia) {
+        if (!categoryImageMap[item.category_id] && item.product_media && (item.product_media as any[]).length > 0) {
+          categoryImageMap[item.category_id] = (item.product_media as any[])[0].media_url;
+        }
+      }
+    }
+  }
+
+  const getCatImage = (cat: any) => cat.banner_image_url || cat.image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
+
+  return data.map(cat => ({
     id: cat.id,
     name: cat.name,
     slug: cat.slug,
-    image: cat.banner_image_url || cat.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+    image: getCatImage(cat),
     parentId: cat.parent_id,
     bannerKicker: cat.banner_kicker || undefined,
     bannerTitle: cat.banner_title || undefined,

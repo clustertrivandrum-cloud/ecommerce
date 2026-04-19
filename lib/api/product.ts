@@ -202,8 +202,8 @@ export async function getProductsByCategory(categorySlug: string): Promise<{ pro
       bannerKicker: catData.banner_kicker || 'Collection',
       bannerTitle: catData.banner_title || catData.name,
       bannerDescription: catData.banner_description || `Explore everything in ${catData.name}.`,
-      bannerImage: catData.banner_image_url || catData.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80',
-      bannerMobileImage: catData.banner_mobile_image_url || catData.banner_image_url || catData.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80',
+      bannerImage: catData.banner_image_url || catData.image_url || (products.length > 0 ? products[0].image : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80'),
+      bannerMobileImage: catData.banner_mobile_image_url || catData.banner_image_url || catData.image_url || (products.length > 0 ? products[0].image : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80'),
     },
   };
 }
