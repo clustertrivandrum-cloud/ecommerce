@@ -113,6 +113,17 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
   return data.map((p: Record<string, any>) => projectProductRow(p as ProductRowLike));
 }
 
+export async function getAllProductSlugs(): Promise<{slug: string}[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('status', 'active');
+    
+  if (error || !data) return [];
+  
+  return data as {slug: string}[];
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const normalizedSlug = slug.trim().toLowerCase();
   const { data, error } = await supabase
