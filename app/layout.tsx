@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import { Suspense } from "react";
+import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
@@ -94,7 +95,17 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${playfair.variable} h-full antialiased scroll-smooth`}
     >
-      <head />
+      <head>
+        <Script id="clarity-script" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "we6jgukq1g");
+          `}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col font-sans selection:bg-accent-gold/20">
         <ThemeProvider>
           <AuthSessionSync />
