@@ -2,7 +2,7 @@
 import { supabase } from '../supabase';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_BASE_SELECT = 'id, name, slug, image_url, parent_id';
+const CATEGORY_BASE_SELECT = 'id, name, slug, image_url, parent_id, sort_order';
 const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
 
 type CategoryRow = {
@@ -11,6 +11,7 @@ type CategoryRow = {
   slug: string;
   image_url: string | null;
   parent_id: string | null;
+  sort_order: number;
   banner_kicker?: string | null;
   banner_title?: string | null;
   banner_description?: string | null;
@@ -24,7 +25,7 @@ async function fetchCategoryRows(filter?: { parentId?: string; slug?: string }):
   if (filter?.parentId) query = query.eq('parent_id', filter.parentId);
   if (filter?.slug) query = query.eq('slug', filter.slug);
 
-  const { data, error } = await query.order('name');
+  const { data, error } = await query.order('sort_order').order('name');
 
   if (!error && data) {
     return data as CategoryRow[];
@@ -35,7 +36,7 @@ async function fetchCategoryRows(filter?: { parentId?: string; slug?: string }):
   if (filter?.parentId) fallbackQuery = fallbackQuery.eq('parent_id', filter.parentId);
   if (filter?.slug) fallbackQuery = fallbackQuery.eq('slug', filter.slug);
 
-  const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('name');
+  const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('sort_order').order('name');
 
   if (fallbackError || !fallbackData) {
     return [];
@@ -50,6 +51,7 @@ export interface Category {
   slug: string;
   image: string;
   parentId: string | null;
+  sortOrder: number;
   bannerKicker?: string;
   bannerTitle?: string;
   bannerDescription?: string;
@@ -131,6 +133,7 @@ export async function getCategories(): Promise<Category[]> {
     slug: cat.slug,
     image: getCatImage(cat),
     parentId: null,
+    sortOrder: cat.sort_order ?? 0,
     bannerKicker: cat.banner_kicker || undefined,
     bannerTitle: cat.banner_title || undefined,
     bannerDescription: cat.banner_description || undefined,
@@ -144,6 +147,7 @@ export async function getCategories(): Promise<Category[]> {
         slug: sub.slug,
         image: getCatImage(sub),
         parentId: cat.id,
+        sortOrder: sub.sort_order ?? 0,
         bannerKicker: sub.banner_kicker || undefined,
         bannerTitle: sub.banner_title || undefined,
         bannerDescription: sub.banner_description || undefined,
@@ -193,6 +197,7 @@ export async function getSubcategories(parentSlug: string): Promise<Category[]> 
     slug: cat.slug,
     image: getCatImage(cat),
     parentId: cat.parent_id,
+    sortOrder: cat.sort_order ?? 0,
     bannerKicker: cat.banner_kicker || undefined,
     bannerTitle: cat.banner_title || undefined,
     bannerDescription: cat.banner_description || undefined,

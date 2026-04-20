@@ -33,6 +33,7 @@ CREATE TABLE public.categories (
   description text,
   image_url text,
   parent_id uuid,
+  sort_order integer NOT NULL DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT categories_pkey PRIMARY KEY (id),
   CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.categories(id)

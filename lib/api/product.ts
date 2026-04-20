@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { Product } from './home';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_BASE_SELECT = 'id, name, parent_id, image_url';
+const CATEGORY_BASE_SELECT = 'id, name, parent_id, image_url, sort_order';
 const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
 
 type CategoryBannerRow = {
@@ -11,6 +11,7 @@ type CategoryBannerRow = {
   name: string;
   parent_id: string | null;
   image_url: string | null;
+  sort_order: number;
   banner_kicker?: string | null;
   banner_title?: string | null;
   banner_description?: string | null;
