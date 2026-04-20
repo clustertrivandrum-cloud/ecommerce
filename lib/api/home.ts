@@ -2,8 +2,10 @@
 import { supabase } from '../supabase';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_BASE_SELECT = 'id, name, slug, image_url, parent_id, sort_order';
+const CATEGORY_LEGACY_SELECT = 'id, name, slug, image_url, parent_id';
+const CATEGORY_BASE_SELECT = `${CATEGORY_LEGACY_SELECT}, sort_order`;
 const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
+const CATEGORY_LEGACY_BANNER_SELECT = `${CATEGORY_LEGACY_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
 
 type CategoryRow = {
   id: string;
@@ -38,11 +40,33 @@ async function fetchCategoryRows(filter?: { parentId?: string; slug?: string }):
 
   const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('sort_order').order('name');
 
-  if (fallbackError || !fallbackData) {
+  if (!fallbackError && fallbackData) {
+    return fallbackData as CategoryRow[];
+  }
+
+  let legacyBannerQuery = supabase.from('categories').select(CATEGORY_LEGACY_BANNER_SELECT);
+
+  if (filter?.parentId) legacyBannerQuery = legacyBannerQuery.eq('parent_id', filter.parentId);
+  if (filter?.slug) legacyBannerQuery = legacyBannerQuery.eq('slug', filter.slug);
+
+  const { data: legacyBannerData, error: legacyBannerError } = await legacyBannerQuery.order('name');
+
+  if (!legacyBannerError && legacyBannerData) {
+    return legacyBannerData.map((category) => ({ ...category, sort_order: 0 })) as CategoryRow[];
+  }
+
+  let legacyQuery = supabase.from('categories').select(CATEGORY_LEGACY_SELECT);
+
+  if (filter?.parentId) legacyQuery = legacyQuery.eq('parent_id', filter.parentId);
+  if (filter?.slug) legacyQuery = legacyQuery.eq('slug', filter.slug);
+
+  const { data: legacyData, error: legacyError } = await legacyQuery.order('name');
+
+  if (legacyError || !legacyData) {
     return [];
   }
 
-  return fallbackData as CategoryRow[];
+  return legacyData.map((category) => ({ ...category, sort_order: 0 })) as CategoryRow[];
 }
 
 export interface Category {

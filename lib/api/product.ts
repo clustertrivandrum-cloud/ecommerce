@@ -3,8 +3,10 @@ import { supabase } from '../supabase';
 import { Product } from './home';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_BASE_SELECT = 'id, name, parent_id, image_url, sort_order';
+const CATEGORY_LEGACY_SELECT = 'id, name, parent_id, image_url';
+const CATEGORY_BASE_SELECT = `${CATEGORY_LEGACY_SELECT}, sort_order`;
 const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
+const CATEGORY_LEGACY_BANNER_SELECT = `${CATEGORY_LEGACY_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
 
 type CategoryBannerRow = {
   id: string;
@@ -36,11 +38,31 @@ async function getCategoryBannerRowBySlug(slug: string): Promise<CategoryBannerR
     .eq('slug', slug)
     .single();
 
-  if (fallbackError || !fallbackData) {
+  if (!fallbackError && fallbackData) {
+    return fallbackData as CategoryBannerRow;
+  }
+
+  const { data: legacyBannerData, error: legacyBannerError } = await supabase
+    .from('categories')
+    .select(CATEGORY_LEGACY_BANNER_SELECT)
+    .eq('slug', slug)
+    .single();
+
+  if (!legacyBannerError && legacyBannerData) {
+    return { ...legacyBannerData, sort_order: 0 } as CategoryBannerRow;
+  }
+
+  const { data: legacyData, error: legacyError } = await supabase
+    .from('categories')
+    .select(CATEGORY_LEGACY_SELECT)
+    .eq('slug', slug)
+    .single();
+
+  if (legacyError || !legacyData) {
     return null;
   }
 
-  return fallbackData as CategoryBannerRow;
+  return { ...legacyData, sort_order: 0 } as CategoryBannerRow;
 }
 
 export type CategoryBanner = {
