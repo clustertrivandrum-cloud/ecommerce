@@ -18,12 +18,22 @@ type SearchResult = Product;
 
 const RECENT_SEARCHES_KEY = 'cluster-recent-searches';
 
+// Normalize: lowercase + collapse hyphens/spaces so
+// "anti tarnish", "antitarnish", "anti-tarnish" all match the same products
+function normalizeForSearch(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')   // hyphens/underscores → space
+    .replace(/\s+/g, ' ')     // collapse multiple spaces
+    .trim();
+}
+
 function normalizeSearchValue(value: string) {
-  return value.trim().toLowerCase();
+  return normalizeForSearch(value);
 }
 
 function getSearchableTokens(product: SearchResult) {
-  return [
+  const raw = [
     product.name,
     product.brand,
     product.material,
@@ -31,18 +41,23 @@ function getSearchableTokens(product: SearchResult) {
     ...(product.variants?.flatMap((variant) => Object.values(variant.options || {})) || []),
   ]
     .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+    .join(' ');
+
+  // Return both raw lowercase AND hyphen-normalized version so both match
+  const lower = raw.toLowerCase();
+  const normalized = normalizeForSearch(raw);
+  return lower === normalized ? lower : `${lower} ${normalized}`;
 }
 
 function getSearchScore(product: SearchResult, rawQuery: string) {
-  const query = normalizeSearchValue(rawQuery);
+  const query = normalizeForSearch(rawQuery);
   if (!query) return 0;
 
-  const title = product.name.toLowerCase();
-  const brand = (product.brand || '').toLowerCase();
-  const material = (product.material || '').toLowerCase();
-  const collection = (product.collection || '').toLowerCase();
+  // Normalize product fields too
+  const title = normalizeForSearch(product.name);
+  const brand = normalizeForSearch(product.brand || '');
+  const material = normalizeForSearch(product.material || '');
+  const collection = normalizeForSearch(product.collection || '');
   const tokens = getSearchableTokens(product);
 
   let score = 0;
@@ -93,21 +108,42 @@ function saveRecentSearch(term: string) {
 }
 
 function highlightMatch(text: string, query: string) {
-  const normalizedQuery = normalizeSearchValue(query);
+  const normalizedQuery = normalizeForSearch(query);
   if (!normalizedQuery) return text;
 
-  const matchIndex = text.toLowerCase().indexOf(normalizedQuery);
-  if (matchIndex === -1) return text;
+  // Try exact match first, then try with hyphens stripped from source text
+  const lowerText = text.toLowerCase();
+  const normalizedText = normalizeForSearch(text);
 
-  const endIndex = matchIndex + normalizedQuery.length;
+  // Direct match in original text
+  const directIdx = lowerText.indexOf(normalizedQuery);
+  if (directIdx !== -1) {
+    return (
+      <>
+        {text.slice(0, directIdx)}
+        <span className="text-accent-gold">{text.slice(directIdx, directIdx + normalizedQuery.length)}</span>
+        {text.slice(directIdx + normalizedQuery.length)}
+      </>
+    );
+  }
 
-  return (
-    <>
-      {text.slice(0, matchIndex)}
-      <span className="text-accent-gold">{text.slice(matchIndex, endIndex)}</span>
-      {text.slice(endIndex)}
-    </>
-  );
+  // Match after normalizing (e.g. "anti tarnish" matches "Anti-Tarnish")
+  const normIdx = normalizedText.indexOf(normalizedQuery);
+  if (normIdx !== -1) {
+    // Highlight entire word range as a block since offsets differ after normalization
+    return (
+      <>
+        {text.split(new RegExp(`(${normalizedQuery.replace(/\s+/g, '[-\\s]?')})`, 'i'))
+          .map((part, i) =>
+            i % 2 === 1
+              ? <span key={i} className="text-accent-gold">{part}</span>
+              : part
+          )}
+      </>
+    );
+  }
+
+  return text;
 }
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {

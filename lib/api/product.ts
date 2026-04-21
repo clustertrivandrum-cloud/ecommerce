@@ -3,11 +3,6 @@ import { supabase } from '../supabase';
 import { Product } from './home';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_LEGACY_SELECT = 'id, name, parent_id, image_url';
-const CATEGORY_BASE_SELECT = `${CATEGORY_LEGACY_SELECT}, sort_order`;
-const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
-const CATEGORY_LEGACY_BANNER_SELECT = `${CATEGORY_LEGACY_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
-
 type CategoryBannerRow = {
   id: string;
   name: string;
@@ -22,47 +17,32 @@ type CategoryBannerRow = {
 };
 
 async function getCategoryBannerRowBySlug(slug: string): Promise<CategoryBannerRow | null> {
+  // Single query — banner columns are part of the live schema
   const { data, error } = await supabase
     .from('categories')
-    .select(CATEGORY_BANNER_SELECT)
+    .select('id, name, parent_id, image_url, sort_order, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url')
     .eq('slug', slug)
     .single();
 
-  if (!error && data) {
-    return data as CategoryBannerRow;
-  }
-
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('categories')
-    .select(CATEGORY_BASE_SELECT)
-    .eq('slug', slug)
-    .single();
-
-  if (!fallbackError && fallbackData) {
-    return fallbackData as CategoryBannerRow;
-  }
-
-  const { data: legacyBannerData, error: legacyBannerError } = await supabase
-    .from('categories')
-    .select(CATEGORY_LEGACY_BANNER_SELECT)
-    .eq('slug', slug)
-    .single();
-
-  if (!legacyBannerError && legacyBannerData) {
-    return { ...legacyBannerData, sort_order: 0 } as CategoryBannerRow;
-  }
-
-  const { data: legacyData, error: legacyError } = await supabase
-    .from('categories')
-    .select(CATEGORY_LEGACY_SELECT)
-    .eq('slug', slug)
-    .single();
-
-  if (legacyError || !legacyData) {
+  if (error) {
+    console.error('getCategoryBannerRowBySlug error:', error.message);
     return null;
   }
 
-  return { ...legacyData, sort_order: 0 } as CategoryBannerRow;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    parent_id: data.parent_id ?? null,
+    image_url: data.image_url ?? null,
+    sort_order: Number(data.sort_order ?? 0),
+    banner_kicker: (data as any).banner_kicker ?? null,
+    banner_title: (data as any).banner_title ?? null,
+    banner_description: (data as any).banner_description ?? null,
+    banner_image_url: (data as any).banner_image_url ?? null,
+    banner_mobile_image_url: (data as any).banner_mobile_image_url ?? null,
+  };
 }
 
 export type CategoryBanner = {
@@ -92,7 +72,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
         ${SELLABLE_VARIANT_SELECT}
       ),
       product_media ( media_url, position ),
-      categories!inner( id, slug, parent_id )
+      categories ( id, slug, parent_id )
     `)
     .eq('status', 'active');
 
@@ -117,17 +97,30 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
     }
   }
 
+  // Normalize search: strip hyphens so "anti tarnish" matches "Anti-Tarnish"
+  // We generate two patterns: one for exact input, one for hyphen ↔ space variant
   const searchTerm = search?.trim().replace(/[,%]/g, ' ');
 
   if (searchTerm) {
-    const pattern = `%${searchTerm}%`;
-    query = query.or([
-      `title.ilike.${pattern}`,
-      `brand.ilike.${pattern}`,
-      `material.ilike.${pattern}`,
-      `collection.ilike.${pattern}`,
-    ].join(','));
+    // Generate both variants: "anti tarnish" → also try "anti-tarnish" and vice versa
+    const withHyphen = searchTerm.replace(/\s+/g, '-');
+    const withSpace = searchTerm.replace(/-+/g, ' ');
+
+    const patterns = [...new Set([searchTerm, withHyphen, withSpace])]; // unique patterns
+
+    const orClauses = patterns.flatMap((term) => {
+      const p = `%${term}%`;
+      return [
+        `title.ilike.${p}`,
+        `brand.ilike.${p}`,
+        `material.ilike.${p}`,
+        `collection.ilike.${p}`,
+      ];
+    });
+
+    query = query.or(orClauses.join(','));
   }
+
 
   const { data, error } = await query.limit(50);
 

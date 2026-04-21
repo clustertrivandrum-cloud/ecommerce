@@ -2,10 +2,6 @@
 import { supabase } from '../supabase';
 import { projectProductRow, SELLABLE_VARIANT_SELECT, type ProductRowLike } from './sellable-variants';
 
-const CATEGORY_LEGACY_SELECT = 'id, name, slug, image_url, parent_id';
-const CATEGORY_BASE_SELECT = `${CATEGORY_LEGACY_SELECT}, sort_order`;
-const CATEGORY_BANNER_SELECT = `${CATEGORY_BASE_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
-const CATEGORY_LEGACY_BANNER_SELECT = `${CATEGORY_LEGACY_SELECT}, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url`;
 
 type CategoryRow = {
   id: string;
@@ -22,51 +18,34 @@ type CategoryRow = {
 };
 
 async function fetchCategoryRows(filter?: { parentId?: string; slug?: string }): Promise<CategoryRow[]> {
-  let query = supabase.from('categories').select(CATEGORY_BANNER_SELECT);
+  // Single query with all banner columns — they are now part of the live schema
+  let query = supabase
+    .from('categories')
+    .select('id, name, slug, image_url, parent_id, sort_order, banner_kicker, banner_title, banner_description, banner_image_url, banner_mobile_image_url');
 
   if (filter?.parentId) query = query.eq('parent_id', filter.parentId);
   if (filter?.slug) query = query.eq('slug', filter.slug);
 
   const { data, error } = await query.order('sort_order').order('name');
 
-  if (!error && data) {
-    return data as CategoryRow[];
-  }
-
-  let fallbackQuery = supabase.from('categories').select(CATEGORY_BASE_SELECT);
-
-  if (filter?.parentId) fallbackQuery = fallbackQuery.eq('parent_id', filter.parentId);
-  if (filter?.slug) fallbackQuery = fallbackQuery.eq('slug', filter.slug);
-
-  const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('sort_order').order('name');
-
-  if (!fallbackError && fallbackData) {
-    return fallbackData as CategoryRow[];
-  }
-
-  let legacyBannerQuery = supabase.from('categories').select(CATEGORY_LEGACY_BANNER_SELECT);
-
-  if (filter?.parentId) legacyBannerQuery = legacyBannerQuery.eq('parent_id', filter.parentId);
-  if (filter?.slug) legacyBannerQuery = legacyBannerQuery.eq('slug', filter.slug);
-
-  const { data: legacyBannerData, error: legacyBannerError } = await legacyBannerQuery.order('name');
-
-  if (!legacyBannerError && legacyBannerData) {
-    return legacyBannerData.map((category) => ({ ...category, sort_order: 0 })) as CategoryRow[];
-  }
-
-  let legacyQuery = supabase.from('categories').select(CATEGORY_LEGACY_SELECT);
-
-  if (filter?.parentId) legacyQuery = legacyQuery.eq('parent_id', filter.parentId);
-  if (filter?.slug) legacyQuery = legacyQuery.eq('slug', filter.slug);
-
-  const { data: legacyData, error: legacyError } = await legacyQuery.order('name');
-
-  if (legacyError || !legacyData) {
+  if (error) {
+    console.error('fetchCategoryRows error:', error.message);
     return [];
   }
 
-  return legacyData.map((category) => ({ ...category, sort_order: 0 })) as CategoryRow[];
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    image_url: row.image_url ?? null,
+    parent_id: row.parent_id ?? null,
+    sort_order: Number(row.sort_order ?? 0),
+    banner_kicker: row.banner_kicker ?? null,
+    banner_title: row.banner_title ?? null,
+    banner_description: row.banner_description ?? null,
+    banner_image_url: row.banner_image_url ?? null,
+    banner_mobile_image_url: row.banner_mobile_image_url ?? null,
+  })) as CategoryRow[];
 }
 
 export interface Category {
