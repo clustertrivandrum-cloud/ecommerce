@@ -79,7 +79,7 @@ export function buildVariantOptionLabel(options: Record<string, string> = {}) {
   return parts.length > 0 ? parts.join(' / ') : null;
 }
 
-export function projectSellableVariants(rawVariants: ProductVariantLike[] = []) {
+export function projectSellableVariants(rawVariants: ProductVariantLike[] = [], fallbackMedia: string[] = []) {
   const normalized = rawVariants
     .map((variant) => {
       const optionEntries = (variant.variant_option_values || [])
@@ -142,7 +142,7 @@ export function projectSellableVariants(rawVariants: ProductVariantLike[] = []) 
         allow_preorder: Boolean(variant.allow_preorder),
         stock,
         options,
-        images: variantMedia,
+        images: variantMedia.length > 0 ? variantMedia : fallbackMedia,
       };
     })
     .filter((variant) => variant.sellable_status === 'sellable');
@@ -177,13 +177,13 @@ export function pickDefaultSellableVariant(variants: ReturnType<typeof projectSe
 }
 
 export function projectProductRow(row: ProductRowLike): Product {
-  const variants = projectSellableVariants(row.product_variants || []);
-  const defaultVariant = pickDefaultSellableVariant(variants);
   const productMedia = (row.product_media || [])
     .slice()
     .sort((left, right) => compareNullableNumber(left.position, right.position))
     .map((media) => media.media_url)
     .filter((value): value is string => Boolean(value));
+  const variants = projectSellableVariants(row.product_variants || [], productMedia);
+  const defaultVariant = pickDefaultSellableVariant(variants);
   const effectiveImages = defaultVariant?.images?.length ? defaultVariant.images : productMedia;
   const primaryImage = effectiveImages[0] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
 
