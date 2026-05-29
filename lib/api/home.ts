@@ -112,22 +112,37 @@ export async function getCategories(): Promise<Category[]> {
   const categoryImageMap: Record<string, string> = {};
 
   if (missingImageIds.length > 0) {
+    const subcatIds = data.filter(c => c.parent_id && missingImageIds.includes(c.parent_id)).map(c => c.id);
+    const allIdsToSearch = [...missingImageIds, ...subcatIds];
+
     const { data: fallbackMedia } = await supabase
       .from('products')
       .select('category_id, product_media ( media_url )')
-      .in('category_id', missingImageIds)
+      .in('category_id', allIdsToSearch)
       .eq('status', 'active');
       
     if (fallbackMedia) {
       for (const item of fallbackMedia) {
-        if (!categoryImageMap[item.category_id] && item.product_media && (item.product_media as any[]).length > 0) {
-          categoryImageMap[item.category_id] = (item.product_media as any[])[0].media_url;
+        if (item.product_media && (item.product_media as any[]).length > 0) {
+          const catId = item.category_id;
+          const mediaUrl = (item.product_media as any[])[0].media_url;
+          
+          if (!categoryImageMap[catId]) {
+            categoryImageMap[catId] = mediaUrl;
+          }
+          
+          const catObj = data.find(c => c.id === catId);
+          if (catObj && catObj.parent_id && missingImageIds.includes(catObj.parent_id)) {
+            if (!categoryImageMap[catObj.parent_id]) {
+              categoryImageMap[catObj.parent_id] = mediaUrl;
+            }
+          }
         }
       }
     }
   }
 
-  const getCatImage = (cat: any) => cat.banner_image_url || cat.image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
+  const getCatImage = (cat: any) => cat.image_url || cat.banner_image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
 
   // Top-level categories only (parent_id is null)
   const parents = data.filter(c => c.parent_id === null).map(cat => ({
@@ -192,7 +207,7 @@ export async function getSubcategories(parentSlug: string): Promise<Category[]> 
     }
   }
 
-  const getCatImage = (cat: any) => cat.banner_image_url || cat.image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
+  const getCatImage = (cat: any) => cat.image_url || cat.banner_image_url || categoryImageMap[cat.id] || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80';
 
   return data.map(cat => ({
     id: cat.id,
