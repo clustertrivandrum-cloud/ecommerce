@@ -18,6 +18,8 @@ const playfair = Playfair_Display({
 
 const SITE_URL = getSiteUrl() || DEFAULT_SITE_URL;
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
