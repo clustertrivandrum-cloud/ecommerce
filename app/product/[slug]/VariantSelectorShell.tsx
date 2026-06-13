@@ -21,6 +21,12 @@ function formatVariantLabel(options: Record<string, string> = {}) {
   return entries.map(([name, value]) => `${name}: ${value}`).join(' / ');
 }
 
+// Extract a representative image for an option value
+function getOptionImage(variants: Product["variants"], optionName: string, optionValue: string, fallbackImage?: string) {
+  const variant = variants?.find((v) => v.options?.[optionName] === optionValue && v.images && v.images.length > 0);
+  return variant?.images?.[0] || fallbackImage;
+}
+
 function resolveVariant(variants: Product["variants"] = [], selected: Record<string, string>) {
   return variants.find((v) => {
     const opts = v.options || {};
@@ -113,6 +119,8 @@ export default function VariantSelectorShell({
       ? selectedVariant.title
       : formatVariantLabel(selectedVariant?.options);
 
+  const [isSharing, setIsSharing] = useState(false);
+
   useEffect(() => {
     setActiveImageIndex(0);
     setShareState(null);
@@ -123,11 +131,14 @@ export default function VariantSelectorShell({
   }, [selectedVariant?.id]);
 
   async function handleShare() {
+    if (isSharing) return;
+    
     const shareUrl = window.location.href;
     const shareText = [product.brand, selectedVariantLabel, `₹${price.toFixed(0)}`]
       .filter(Boolean)
       .join(" • ");
 
+    setIsSharing(true);
     try {
       if (navigator.share) {
         await navigator.share({
@@ -164,11 +175,23 @@ export default function VariantSelectorShell({
             ? error.message
             : "Could not share this product right now.",
       });
+    } finally {
+      setIsSharing(false);
     }
   }
 
   return (
     <main className="max-w-7xl mx-auto px-4 md:px-12 py-12 md:py-20 min-h-screen">
+      <style>{`
+        @keyframes fadeImage {
+          from { opacity: 0; transform: scale(0.97); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-image {
+          animation: fadeImage 0.4s ease-out forwards;
+        }
+      `}</style>
+      
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-text-secondary mb-8">
         <Link href="/" className="hover:text-accent-gold transition-colors">Home</Link>
@@ -182,12 +205,13 @@ export default function VariantSelectorShell({
         {/* Left: Image Gallery */}
         <div className="space-y-3">
           {/* Main image */}
-          <div className="relative aspect-square w-full bg-card overflow-hidden">
+          <div className="relative aspect-square w-full bg-card overflow-hidden transition-all duration-300">
             <Image
+              key={activeImage}
               src={activeImage}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-cover animate-fade-image"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
@@ -259,15 +283,15 @@ export default function VariantSelectorShell({
           )}
 
           {/* Price */}
-          <div className="flex items-end gap-3 mb-6 pb-6 border-b border-border">
-            <span className="text-3xl font-semibold">₹{price.toFixed(0)}</span>
+          <div className="flex items-end gap-3 mb-6 pb-6 border-b border-border transition-all duration-300">
+            <span className="text-3xl font-semibold transition-all duration-300">₹{price.toFixed(0)}</span>
             {compareAt != null && compareAt > 0 && (
-              <span className="text-lg text-text-secondary/80 line-through font-light mb-0.5">
+              <span className="text-lg text-text-secondary/80 line-through font-light mb-0.5 transition-all duration-300">
                 ₹{compareAt.toFixed(0)}
               </span>
             )}
             {discount > 0 && (
-              <span className="text-accent-gold text-sm font-medium mb-0.5">Save ₹{(compareAt! - price).toFixed(0)}</span>
+              <span className="text-accent-gold text-sm font-medium mb-0.5 transition-all duration-300">Save ₹{(compareAt! - price).toFixed(0)}</span>
             )}
           </div>
 
@@ -302,6 +326,7 @@ export default function VariantSelectorShell({
                     {opt.values.map((val) => {
                       const active = selected[opt.name] === val;
                       const optionState = getOptionValueState(product.variants, selected, opt.name, val);
+                      const optionImage = getOptionImage(product.variants, opt.name, val, product.image);
                       return (
                         <span
                           key={val}
@@ -313,27 +338,34 @@ export default function VariantSelectorShell({
                             disabled={optionState.disabled}
                             aria-label={optionState.reason ? `${val} - ${optionState.reason}` : val}
                             onClick={() => setSelected((prev) => ({ ...prev, [opt.name]: val }))}
-                            className={`px-3 py-2 border text-sm rounded-md transition-colors ${
+                            className={`px-3 py-2 border text-sm rounded-md transition-all duration-300 ${
                               optionState.disabled
                                 ? "border-border bg-card/60 text-text-secondary/50 cursor-not-allowed opacity-60"
                                 : active
-                                ? "border-text-primary text-text-primary bg-card"
-                                : "border-border bg-card/72 text-text-secondary hover:border-text-primary"
+                                ? "border-text-primary text-text-primary bg-card ring-1 ring-text-primary ring-offset-1 ring-offset-background"
+                                : "border-border bg-card/72 text-text-secondary hover:border-text-primary hover:bg-card/90"
                             }`}
                           >
-                            <span className="flex flex-col items-start gap-1">
-                              <span>{val}</span>
-                              {optionState.badge && (
-                                <span
-                                  className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest ${
-                                    optionState.disabled
-                                      ? "bg-border text-text-secondary"
-                                      : "bg-accent-gold/15 text-accent-gold"
-                                  }`}
-                                >
-                                  {optionState.badge}
+                            <span className="flex items-center gap-3">
+                              {optionImage && (
+                                <span className="relative w-8 h-8 rounded-sm overflow-hidden flex-shrink-0 border border-border/50">
+                                  <Image src={optionImage} alt={val} fill className="object-cover" sizes="32px" />
                                 </span>
                               )}
+                              <span className="flex flex-col items-start gap-1">
+                                <span>{val}</span>
+                                {optionState.badge && (
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest transition-colors ${
+                                      optionState.disabled
+                                        ? "bg-border text-text-secondary"
+                                        : "bg-accent-gold/15 text-accent-gold"
+                                    }`}
+                                  >
+                                    {optionState.badge}
+                                  </span>
+                                )}
+                              </span>
                             </span>
                           </button>
                         </span>
@@ -346,10 +378,10 @@ export default function VariantSelectorShell({
           )}
 
           {/* Stock & Actions */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 text-sm text-text-secondary mb-6">
+          <div className="mb-6 transition-all duration-300">
+            <div className="flex items-center gap-2 text-sm text-text-secondary mb-6 transition-all duration-300">
               <div
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
                   isUnavailable ? "bg-text-secondary" : isSoldOut ? "bg-red-500" : isPreorder ? "bg-accent-gold" : "bg-accent-mint"
                 }`}
               />
