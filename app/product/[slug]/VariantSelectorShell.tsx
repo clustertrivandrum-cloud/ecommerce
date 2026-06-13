@@ -244,7 +244,7 @@ export default function VariantSelectorShell({
           </h1>
 
           {/* Rating */}
-          {product.rating && product.rating > 0 && (
+          {(product.rating ?? 0) > 0 && (
             <div className="flex items-center gap-2 mb-4">
               <div className="flex">
                 {Array(5).fill(0).map((_, i) => (
@@ -261,7 +261,7 @@ export default function VariantSelectorShell({
           {/* Price */}
           <div className="flex items-end gap-3 mb-6 pb-6 border-b border-border">
             <span className="text-3xl font-semibold">₹{price.toFixed(0)}</span>
-            {compareAt && (
+            {(compareAt ?? 0) > 0 && (
               <span className="text-lg text-text-secondary/80 line-through font-light mb-0.5">
                 ₹{compareAt.toFixed(0)}
               </span>
@@ -280,9 +280,6 @@ export default function VariantSelectorShell({
               <Share2 className="h-4 w-4" />
               Share Product
             </button>
-            <span className="text-xs uppercase tracking-[0.22em] text-text-secondary">
-              Link preview now uses this product&apos;s own title, image, and description.
-            </span>
           </div>
 
           {shareState ? (
