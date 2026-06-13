@@ -106,9 +106,9 @@ export function ProductCard({ product }: ProductCardProps) {
           <span className="text-sm font-semibold text-text-primary">
             ₹{product.price.toFixed(0)}
           </span>
-          {product.original_price && (
+          {(product.original_price ?? 0) > 0 && (
             <span className="text-xs text-text-secondary/80 line-through">
-              ₹{product.original_price.toFixed(0)}
+              ₹{product.original_price!.toFixed(0)}
             </span>
           )}
         </div>
