@@ -261,7 +261,7 @@ export default function VariantSelectorShell({
           {/* Price */}
           <div className="flex items-end gap-3 mb-6 pb-6 border-b border-border">
             <span className="text-3xl font-semibold">₹{price.toFixed(0)}</span>
-            {(compareAt ?? 0) > 0 && (
+            {compareAt != null && compareAt > 0 && (
               <span className="text-lg text-text-secondary/80 line-through font-light mb-0.5">
                 ₹{compareAt.toFixed(0)}
               </span>
