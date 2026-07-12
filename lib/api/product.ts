@@ -122,7 +122,7 @@ export async function getProducts(categorySlug?: string, search?: string): Promi
   }
 
 
-  const { data, error } = await query.limit(50);
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
