@@ -101,6 +101,19 @@ export default async function ProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
+      <Script id="fb-view-content" strategy="afterInteractive">
+        {`
+          if (typeof fbq === 'function') {
+            fbq('track', 'ViewContent', {
+              content_name: ${JSON.stringify(product.name)},
+              content_ids: [${JSON.stringify(product.id)}],
+              content_type: 'product',
+              value: ${product.price},
+              currency: 'INR'
+            });
+          }
+        `}
+      </Script>
       <Suspense>
         <ProductPageInner product={product} />
       </Suspense>

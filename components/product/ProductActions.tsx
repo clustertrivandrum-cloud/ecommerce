@@ -85,6 +85,21 @@ export function ProductActions({ product, isStickyMobile, selectedVariant }: Pro
     try {
       const result = await toggleWishlistProduct(user, product.id);
       setIsWishlisted(result.isWishlisted);
+
+      // Meta Pixel AddToWishlist Tracking
+      if (result.isWishlisted && typeof window !== 'undefined') {
+        const fbq = (window as Window & { fbq?: (event: string, action: string, params?: object) => void }).fbq;
+        if (fbq) {
+          fbq('track', 'AddToWishlist', {
+            content_name: product.name,
+            content_ids: [product.id],
+            content_type: 'product',
+            value: product.price,
+            currency: 'INR'
+          });
+        }
+      }
+
       setWishlistNotice({
         tone: 'success',
         message: result.isWishlisted ? 'Saved to wishlist.' : 'Removed from wishlist.',

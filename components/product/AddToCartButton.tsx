@@ -71,6 +71,22 @@ export function AddToCartButton({
         variantId: selectedVariantId || product.variantId || undefined,
         variantLabel: selectedVariantLabel || selectedSize || undefined,
       });
+
+      // Meta Pixel AddToCart Tracking
+      if (typeof window !== 'undefined') {
+        const fbq = (window as Window & { fbq?: (event: string, action: string, params?: object) => void }).fbq;
+        if (fbq) {
+          fbq('track', 'AddToCart', {
+            content_name: product.name,
+            content_ids: [product.id],
+            content_type: 'product',
+            value: effectivePrice * quantity,
+            currency: 'INR',
+            quantity: quantity
+          });
+        }
+      }
+
       setIsAdding(false);
       setAdded(true);
       

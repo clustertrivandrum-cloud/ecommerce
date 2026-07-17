@@ -195,6 +195,22 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const fbq = (window as Window & { fbq?: (event: string, action: string, params?: object) => void }).fbq;
+      if (fbq) {
+        fbq('track', 'InitiateCheckout', {
+          content_ids: items.map(item => item.id),
+          content_type: 'product',
+          value: total,
+          currency: 'INR',
+          num_items: items.reduce((sum, item) => sum + item.quantity, 0)
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadAddressBook = async () => {
@@ -440,6 +456,21 @@ export default function CheckoutPage() {
             const verifyData = await verifyResponse.json() as VerifyPaymentResponse;
             if (!verifyResponse.ok) {
               throw new Error(verifyData.error || 'Payment verification failed.');
+            }
+
+            // Track Purchase event before clearing the cart
+            if (typeof window !== 'undefined') {
+              const fbq = (window as Window & { fbq?: (event: string, action: string, params?: object) => void }).fbq;
+              if (fbq) {
+                fbq('track', 'Purchase', {
+                  content_ids: items.map(item => item.id),
+                  content_type: 'product',
+                  value: orderTotal,
+                  currency: 'INR',
+                  num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+                  order_id: resData.orderId
+                });
+              }
             }
 
             checkoutTerminalStateHandled = true;

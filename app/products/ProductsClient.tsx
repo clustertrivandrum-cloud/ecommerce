@@ -214,6 +214,21 @@ export function ProductsClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deferredSearchText, filters]);
 
+  // Track Search events
+  useEffect(() => {
+    const query = searchParams.get('search');
+    if (query && query.trim().length >= 2) {
+      if (typeof window !== 'undefined') {
+        const fbq = (window as Window & { fbq?: (event: string, action: string, params?: object) => void }).fbq;
+        if (fbq) {
+          fbq('track', 'Search', {
+            search_string: query.trim()
+          });
+        }
+      }
+    }
+  }, [searchParams]);
+
   const filtered = useMemo(() => {
     let result = [...products];
 
