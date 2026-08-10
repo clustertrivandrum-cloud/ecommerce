@@ -302,3 +302,29 @@ export async function sendOrderInvoiceEmail(orderId: string) {
     replyTo: store.storeEmail,
   });
 }
+
+export async function sendStoreOwnerNotificationEmail(orderId: string) {
+  const order = await getOrderForEmail(orderId);
+  if (!order) {
+    return { sent: false as const, reason: 'order-not-found' };
+  }
+
+  const store = await getStoreMailContext();
+  const siteUrl = getSiteUrl();
+  const orderUrl = siteUrl ? `${siteUrl.replace(/\/$/, '')}/orders?orderId=${order.id}&status=paid` : null;
+  const orderLabel = order.order_number ? `#${order.order_number}` : `Order ${order.id.slice(0, 8)}`;
+  const ownerEmail = 'clusterfascination@gmail.com';
+  
+  const currency = order.currency || 'INR';
+  const totalFormatted = formatCurrency(Number(order.grand_total || 0), currency);
+  const customerName = order.guest_name || 'Customer';
+
+  return sendResendEmail({
+    to: ownerEmail,
+    subject: `[${store.storeName}] Order ${orderLabel} placed by ${customerName} (${totalFormatted})`,
+    html: `<div style="font-family:Arial,sans-serif;padding:20px;text-align:center;"><h2>New Order: ${escapeHtml(orderLabel)} for ${escapeHtml(totalFormatted)}</h2></div>` + buildInvoiceHtml(order, store, orderUrl),
+    text: `New Order: ${orderLabel} for ${totalFormatted}\n\n` + buildInvoiceText(order, store, orderUrl),
+    storeName: store.storeName,
+    replyTo: order.guest_email || undefined,
+  });
+}

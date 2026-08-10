@@ -3,7 +3,7 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto
 import Razorpay from 'razorpay';
 import type { CartItemInput, CheckoutData } from '@/lib/api/order';
 import { validateCoupon, incrementCouponUse } from '@/lib/server/coupons';
-import { sendOrderInvoiceEmail } from '@/lib/server/order-email';
+import { sendOrderInvoiceEmail, sendStoreOwnerNotificationEmail } from '@/lib/server/order-email';
 import { calculateShippingCharge } from '@/lib/shipping';
 import { getShippingSettings } from '@/lib/server/app-settings';
 import { buildVariantOptionLabel } from '@/lib/api/sellable-variants';
@@ -842,6 +842,12 @@ export async function finalizePaidOrder({
     await sendOrderInvoiceEmail(orderId);
   } catch (emailError) {
     console.error('Order invoice email failed', emailError);
+  }
+
+  try {
+    await sendStoreOwnerNotificationEmail(orderId);
+  } catch (emailError) {
+    console.error('Store owner notification email failed', emailError);
   }
 }
 
