@@ -62,7 +62,12 @@ export const useCartStore = create<CartState>()(
         const newItems = existing
           ? state.items.map((i) =>
               getCartItemKey(i.id, i.variantId) === itemKey
-                ? { ...i, quantity: Math.min(i.quantity + normalizedItem.quantity, availableStock ?? i.quantity + normalizedItem.quantity), stock: availableStock ?? i.stock }
+                ? {
+                    ...i,
+                    quantity: Math.min(i.quantity + normalizedItem.quantity, availableStock ?? i.quantity + normalizedItem.quantity),
+                    stock: availableStock ?? i.stock,
+                    is_free_delivery: normalizedItem.is_free_delivery ?? i.is_free_delivery,
+                  }
                 : i
             )
           : [...state.items, { ...normalizedItem, stock: availableStock }];

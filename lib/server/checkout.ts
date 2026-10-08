@@ -401,9 +401,11 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
     couponAmount = coupon.amountOff;
   }
 
-  const hasFreeDelivery = pricedItems.some((item) =>
-    Boolean(variants.get(item.variant_id)?.products?.is_free_delivery)
-  );
+  const hasFreeDelivery = pricedItems.some((item) => {
+    const prod = variants.get(item.variant_id)?.products as any;
+    const isFree = Array.isArray(prod) ? prod[0]?.is_free_delivery : prod?.is_free_delivery;
+    return Boolean(isFree);
+  });
 
   const { taxTotal, discount, shippingCharge, grandTotal } = await calculateGrandTotal(
     data,

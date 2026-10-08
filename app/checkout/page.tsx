@@ -21,6 +21,7 @@ import {
   normalizeShippingSettings,
   type ShippingSettings,
 } from '@/lib/shipping';
+import { supabase } from '@/lib/supabase';
 
 interface CheckoutResponse {
   error?: string;
@@ -278,8 +279,63 @@ export default function CheckoutPage() {
     router.push(`/orders?${params.toString()}`);
   };
 
+  const [dbFreeDelivery, setDbFreeDelivery] = useState(false);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    let cancelled = false;
+
+    async function verifyFreeDeliveryWithBackend() {
+      try {
+        const productIds = items.map((i) => i.id).filter(Boolean);
+        const variantIds = items.map((i) => i.variantId).filter(Boolean);
+
+        let hasFree = false;
+
+        if (productIds.length > 0) {
+          const { data: prods } = await supabase
+            .from('products')
+            .select('id, is_free_delivery')
+            .in('id', productIds)
+            .eq('is_free_delivery', true);
+
+          if (prods && prods.length > 0) {
+            hasFree = true;
+          }
+        }
+
+        if (!hasFree && variantIds.length > 0) {
+          const { data: vars } = await supabase
+            .from('product_variants')
+            .select('id, products(is_free_delivery)')
+            .in('id', variantIds);
+
+          if (vars && vars.some((v: any) => {
+            const p = v.products;
+            return Array.isArray(p) ? p[0]?.is_free_delivery : p?.is_free_delivery;
+          })) {
+            hasFree = true;
+          }
+        }
+
+        if (!cancelled && hasFree) {
+          setDbFreeDelivery(true);
+        }
+      } catch (err) {
+        console.error('Failed to verify free delivery from backend', err);
+      }
+    }
+
+    verifyFreeDeliveryWithBackend();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
   const isPaymentUnavailable = checkoutConfigLoaded && !paymentsEnabled;
-  const hasFreeDeliveryItem = items.some((item) => Boolean(item.is_free_delivery));
+  const hasFreeDeliveryItem = items.some((item) => Boolean(item.is_free_delivery)) || dbFreeDelivery;
   const shippingCost =
     calculateShippingCharge({
       subtotal: total,
