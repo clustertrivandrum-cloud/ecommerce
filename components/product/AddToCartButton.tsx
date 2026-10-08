@@ -70,6 +70,7 @@ export function AddToCartButton({
         stock: effectiveStock ?? undefined,
         variantId: selectedVariantId || product.variantId || undefined,
         variantLabel: selectedVariantLabel || selectedSize || undefined,
+        is_free_delivery: product.is_free_delivery,
       });
 
       // Meta Pixel AddToCart Tracking

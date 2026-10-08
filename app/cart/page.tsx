@@ -59,7 +59,14 @@ export default function CartPage() {
                     <p className="text-lg font-light">₹{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                   
-                  <p className="text-text-secondary text-sm mb-6">{item.variantLabel || 'Standard'}</p>
+                  <div className="flex items-center gap-2 mb-6">
+                    <p className="text-text-secondary text-sm">{item.variantLabel || 'Standard'}</p>
+                    {item.is_free_delivery && (
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-mint bg-accent-mint/10 px-2 py-0.5 rounded">
+                        Free Delivery
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="mt-auto flex items-center justify-between border border-border w-max">
                     <button 
@@ -117,7 +124,13 @@ export default function CartPage() {
                 
                 <div className="flex justify-between mt-4">
                   <span className="text-text-secondary">Shipping</span>
-                  <span>Calculated at next step</span>
+                  <span>
+                    {items.some((i) => i.is_free_delivery) ? (
+                      <span className="text-accent-mint font-semibold">FREE (Free Delivery)</span>
+                    ) : (
+                      'Calculated at next step'
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Taxes</span>

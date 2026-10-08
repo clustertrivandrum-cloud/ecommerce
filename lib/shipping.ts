@@ -48,7 +48,12 @@ export function calculateShippingCharge(input: {
   discount?: number;
   state?: string | null;
   settings?: Partial<ShippingSettings> | null;
+  hasFreeDeliveryItem?: boolean;
 }) {
+  if (input.hasFreeDeliveryItem) {
+    return 0;
+  }
+
   const settings = normalizeShippingSettings(input.settings);
   const merchandiseTotal = Math.max(0, input.subtotal - (input.discount || 0));
 

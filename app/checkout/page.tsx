@@ -279,12 +279,14 @@ export default function CheckoutPage() {
   };
 
   const isPaymentUnavailable = checkoutConfigLoaded && !paymentsEnabled;
+  const hasFreeDeliveryItem = items.some((item) => Boolean(item.is_free_delivery));
   const shippingCost =
     calculateShippingCharge({
       subtotal: total,
       discount: appliedDiscount?.amount || 0,
       state: formData.state,
       settings: shippingSettings,
+      hasFreeDeliveryItem,
     }) ?? 0;
   const isContactStepValid = Boolean(
     formData.email &&
@@ -660,11 +662,13 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-text-secondary">
                   <span>Shipping</span>
                   <span>
-                    {formData.state
-                      ? shippingCost === 0
-                        ? 'FREE'
-                        : `₹${shippingCost.toFixed(2)}`
-                      : 'Enter state'}
+                    {hasFreeDeliveryItem
+                      ? 'FREE'
+                      : formData.state
+                        ? shippingCost === 0
+                          ? 'FREE'
+                          : `₹${shippingCost.toFixed(2)}`
+                        : 'Enter state'}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 text-base font-heading text-text-primary">
@@ -813,29 +817,42 @@ export default function CheckoutPage() {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-sm">
               <h2 className="mb-4 text-2xl font-heading md:mb-6">Delivery Charge</h2>
 
-              <div className="space-y-4 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none md:p-6">
-                <div className="flex justify-between gap-4">
-                  <span>Orders of ₹{shippingSettings.freeShippingThreshold} and above</span>
-                  <span className="font-bold text-accent-gold">FREE</span>
+              {hasFreeDeliveryItem ? (
+                <div className="rounded-[1.25rem] border border-emerald-500/30 bg-emerald-500/10 p-4 md:rounded-none md:p-6 text-emerald-400 space-y-1">
+                  <div className="font-semibold text-base flex items-center gap-2">
+                    <span>🎉 Free Delivery Applied</span>
+                  </div>
+                  <p className="text-xs text-text-secondary">
+                    Your cart contains a product with free delivery. Shipping charges are completely waived for this order!
+                  </p>
                 </div>
-                <div className="flex justify-between gap-4 text-text-secondary">
-                  <span>Kerala orders below ₹{shippingSettings.freeShippingThreshold}</span>
-                  <span>₹{shippingSettings.keralaShippingCharge}</span>
+              ) : (
+                <div className="space-y-4 rounded-[1.25rem] border border-border bg-card p-4 md:rounded-none md:p-6">
+                  <div className="flex justify-between gap-4">
+                    <span>Orders of ₹{shippingSettings.freeShippingThreshold} and above</span>
+                    <span className="font-bold text-accent-gold">FREE</span>
+                  </div>
+                  <div className="flex justify-between gap-4 text-text-secondary">
+                    <span>Kerala orders below ₹{shippingSettings.freeShippingThreshold}</span>
+                    <span>₹{shippingSettings.keralaShippingCharge}</span>
+                  </div>
+                  <div className="flex justify-between gap-4 text-text-secondary">
+                    <span>Other states below ₹{shippingSettings.freeShippingThreshold}</span>
+                    <span>₹{shippingSettings.otherStatesShippingCharge}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between gap-4 text-text-secondary">
-                  <span>Other states below ₹{shippingSettings.freeShippingThreshold}</span>
-                  <span>₹{shippingSettings.otherStatesShippingCharge}</span>
-                </div>
-              </div>
+              )}
 
               <div className="rounded-[1.25rem] border border-accent-gold bg-card p-4 md:rounded-none md:p-6">
                 <div className="flex justify-between gap-4 text-base">
                   <span>
                     Current delivery charge
                     <span className="block text-sm text-text-secondary mt-1">
-                      {formData.state
-                        ? `Shipping to ${formData.state}`
-                        : 'Set your state in the contact step to confirm the delivery charge'}
+                      {hasFreeDeliveryItem
+                        ? 'Free delivery applied for product in cart'
+                        : formData.state
+                          ? `Shipping to ${formData.state}`
+                          : 'Set your state in the contact step to confirm the delivery charge'}
                     </span>
                   </span>
                   <span className="font-bold text-accent-gold">
@@ -927,11 +944,13 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-text-secondary">
               <span>Shipping</span>
               <span>
-                {formData.state
-                  ? shippingCost === 0
-                    ? 'FREE'
-                    : `₹${shippingCost.toFixed(2)}`
-                  : `Enter state to calculate`}
+                {hasFreeDeliveryItem
+                  ? 'FREE'
+                  : formData.state
+                    ? shippingCost === 0
+                      ? 'FREE'
+                      : `₹${shippingCost.toFixed(2)}`
+                    : `Enter state to calculate`}
               </span>
             </div>
             

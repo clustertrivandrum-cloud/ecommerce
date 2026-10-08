@@ -60,7 +60,12 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function calculateGrandTotal(data: CheckoutData, subtotal: number, couponAmount = 0) {
+export async function calculateGrandTotal(
+  data: CheckoutData,
+  subtotal: number,
+  couponAmount = 0,
+  hasFreeDelivery = false
+) {
   const taxTotal = 0;
   const discount = Math.max(data.discountAmount || 0, couponAmount);
   const shippingSettings = await getShippingSettings();
@@ -70,6 +75,7 @@ export async function calculateGrandTotal(data: CheckoutData, subtotal: number, 
       discount,
       state: data.address.state,
       settings: shippingSettings,
+      hasFreeDeliveryItem: hasFreeDelivery,
     }) ?? shippingSettings.otherStatesShippingCharge;
   const grandTotal = Math.max(0, subtotal - discount) + shippingCharge + taxTotal;
 
@@ -88,6 +94,7 @@ type VariantRow = {
     title?: string | null;
     slug?: string | null;
     status?: string | null;
+    is_free_delivery?: boolean | null;
     product_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
   } | null;
   variant_media?: Array<{ media_url?: string | null; position?: number | null }> | null;
@@ -197,7 +204,7 @@ async function fetchVariantPricingAndStock(items: CartItemInput[]) {
       allow_preorder,
       sellable_status,
       inventory_items(available_quantity, reserved_quantity, location_id),
-      products(title, slug, status, product_media(media_url, position)),
+      products(title, slug, status, is_free_delivery, product_media(media_url, position)),
       variant_media(media_url, position),
       variant_option_values(
         product_option_values(
@@ -394,7 +401,16 @@ export async function createPendingOrder(data: CheckoutData, items: CartItemInpu
     couponAmount = coupon.amountOff;
   }
 
-  const { taxTotal, discount, shippingCharge, grandTotal } = await calculateGrandTotal(data, subtotal, couponAmount);
+  const hasFreeDelivery = pricedItems.some((item) =>
+    Boolean(variants.get(item.variant_id)?.products?.is_free_delivery)
+  );
+
+  const { taxTotal, discount, shippingCharge, grandTotal } = await calculateGrandTotal(
+    data,
+    subtotal,
+    couponAmount,
+    hasFreeDelivery
+  );
   const addressPayload = buildOrderAddressPayload(data);
   const fullName = normalizeFullName(
     data.guestName || `${data.address.firstName} ${data.address.lastName}`

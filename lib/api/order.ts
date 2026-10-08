@@ -26,6 +26,7 @@ export interface CartItemInput {
   image?: string;
   variantId?: string | null;
   variantLabel?: string;
+  is_free_delivery?: boolean;
 }
 
 export interface CheckoutSessionResponse {

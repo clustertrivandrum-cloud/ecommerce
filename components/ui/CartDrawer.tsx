@@ -74,7 +74,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </Link>
                   </div>
                   
-                  <p className="text-text-secondary text-xs mb-4">{item.variantLabel || 'Standard'}</p>
+                  <div className="flex items-center gap-2 mb-4">
+                    <p className="text-text-secondary text-xs">{item.variantLabel || 'Standard'}</p>
+                    {item.is_free_delivery && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-accent-mint bg-accent-mint/10 px-1.5 py-0.5 rounded">
+                        Free Delivery
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="mt-auto flex items-center justify-between w-full">
                     <div className="flex items-center border border-border">
@@ -111,10 +118,16 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
         {items.length > 0 && (
           <div className="p-6 border-t border-border bg-card">
-            <div className="flex justify-between items-center text-lg font-heading tracking-wide mb-6">
+            <div className="flex justify-between items-center text-lg font-heading tracking-wide mb-2">
               <span>Subtotal</span>
               <span>₹{total.toFixed(2)}</span>
             </div>
+            {items.some((i) => i.is_free_delivery) && (
+              <div className="flex items-center justify-between text-xs text-accent-mint mb-4">
+                <span>Shipping</span>
+                <span className="font-semibold uppercase tracking-wider">FREE (Free Delivery item)</span>
+              </div>
+            )}
             
             <Link 
               href="/checkout"

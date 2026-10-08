@@ -296,6 +296,12 @@ export default function VariantSelectorShell({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mb-6">
+            {product.is_free_delivery && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
+                <Truck className="h-3.5 w-3.5 text-emerald-400" />
+                Free Delivery
+              </span>
+            )}
             <button
               type="button"
               onClick={handleShare}
@@ -414,7 +420,9 @@ export default function VariantSelectorShell({
           <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-y border-border">
             <div className="flex flex-col items-center gap-1 text-center">
               <Truck className="w-4 h-4 text-accent-gold" />
-              <span className="text-[10px] text-text-secondary uppercase tracking-widest">Fast Delivery</span>
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest">
+                {product.is_free_delivery ? "Free Delivery" : "Fast Delivery"}
+              </span>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
               <Package className="w-4 h-4 text-accent-gold" />

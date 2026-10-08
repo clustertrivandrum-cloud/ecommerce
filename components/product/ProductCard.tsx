@@ -17,6 +17,7 @@ interface ProductCardProps {
     rating?: number;
     review_count?: number;
     variantId?: string;
+    is_free_delivery?: boolean;
   };
 }
 
@@ -41,6 +42,7 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       stock: product.stock,
       variantId: product.variantId,
+      is_free_delivery: product.is_free_delivery,
     });
   };
 
@@ -74,6 +76,11 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.stock > 0 && product.stock <= 5 && (
             <span className="bg-red-900/92 text-white text-[10px] px-2 py-0.5 font-medium tracking-wide shadow-sm">
               Only {product.stock} left
+            </span>
+          )}
+          {product.is_free_delivery && !isSoldOut && (
+            <span className="bg-emerald-700 text-white text-[10px] px-2 py-0.5 font-bold tracking-wide shadow-sm">
+              FREE DELIVERY
             </span>
           )}
         </div>

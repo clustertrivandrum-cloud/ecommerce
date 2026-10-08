@@ -14,6 +14,7 @@ export type CartItem = {
   image?: string;
   variantId?: string;
   variantLabel?: string;
+  is_free_delivery?: boolean;
 };
 
 const calculateTotal = (items: CartItem[]) =>
@@ -25,6 +26,7 @@ function normalizeCartItem(item: CartItem & { variant?: string }): CartItem {
   return {
     ...item,
     variantId: item.variantId ?? item.variant,
+    is_free_delivery: Boolean(item.is_free_delivery),
   };
 }
 
